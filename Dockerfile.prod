@@ -1,0 +1,17 @@
+FROM node:16.13.0 as npm-build
+WORKDIR /app
+ENV PATH /app/node_modules/.bin:$PATH
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM node:latest
+WORKDIR /app/dist
+RUN mkdir -p /app/dist/uploads
+COPY --from=npm-build /app/dist /app/dist
+COPY --from=npm-build /app/node_modules /app/node_modules
+COPY --from=npm-build /app/supergraph.graphql /app/dist/supergraph.graphql
+COPY --from=npm-build /app/package*.json /app/
+EXPOSE 5000
+CMD [ "node", "server.js" ]

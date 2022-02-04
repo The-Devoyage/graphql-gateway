@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "strict": true,
+    "baseUrl": "./src",
+    "typeRoots": ["@types", "@types/custom.d.ts"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "@types/custom.d.ts",
+    "src"
+  ],
+  "exclude": ["node_modules"]
+}
