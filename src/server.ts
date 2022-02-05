@@ -6,7 +6,10 @@ import { isAuth } from "./middleware";
 import { ApolloGateway } from "@apollo/gateway";
 import { graphqlUploadExpress } from "graphql-upload";
 import { Router } from "./routes";
-import { AuthenticatedDataSource, supergraphSdl } from "graphql";
+import { AuthenticatedDataSource } from "graphql";
+import { readFileSync } from "fs";
+
+const supergraphSdl = readFileSync("./supergraph.graphql").toString();
 
 dotenv.config();
 
