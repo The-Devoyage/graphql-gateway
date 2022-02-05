@@ -4,11 +4,14 @@
     "module": "commonjs",
     "outDir": "./dist",
     "strict": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "typeRoots": ["@types", "@types/custom.d.ts"],
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@src/*": ["src/*"]
+    }
   },
   "include": [
     "@types/custom.d.ts",

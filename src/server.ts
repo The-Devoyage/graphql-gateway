@@ -6,7 +6,7 @@ import { isAuth } from "./middleware";
 import { ApolloGateway } from "@apollo/gateway";
 import { graphqlUploadExpress } from "graphql-upload";
 import { Router } from "./routes";
-import { AuthenticatedDataSource } from "graphql";
+import { AuthenticatedDataSource } from "@src/graphql";
 import { readFileSync } from "fs";
 
 const supergraphSdl = readFileSync("./supergraph.graphql").toString();
