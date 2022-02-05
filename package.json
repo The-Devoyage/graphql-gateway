@@ -1,6 +1,6 @@
 {
   "name": "graphql-gateway",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -28,6 +28,11 @@
     "graphql-upload": "^13.0.0",
     "http-proxy-middleware": "^2.0.2",
     "jsonwebtoken": "^8.5.1",
-    "nodemon": "^2.0.7"
+    "module-alias": "^2.2.2",
+    "nodemon": "^2.0.7",
+    "source-map-support": "^0.5.21"
+  },
+  "_moduleAliases": {
+    "@src": "dist/"
   }
 }

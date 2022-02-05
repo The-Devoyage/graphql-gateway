@@ -1,3 +1,5 @@
+import "module-alias/register";
+import "source-map-support/register";
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
