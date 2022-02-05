@@ -4,11 +4,9 @@ import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
 import { isAuth } from "./middleware";
 import { ApolloGateway } from "@apollo/gateway";
-import { GraphQLRequest } from "apollo-server-core";
-import { readFileSync } from "fs";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import FileUploadDataSource from "@profusion/apollo-federation-upload";
 import { graphqlUploadExpress } from "graphql-upload";
+import { Router } from "./routes";
+import { AuthenticatedDataSource, supergraphSdl } from "graphql";
 
 dotenv.config();
 
@@ -16,33 +14,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-const mediaServerUrl = process.env.MEDIA_SERVER_URL;
-
-if (mediaServerUrl) {
-  app.use(
-    "/public",
-    createProxyMiddleware({
-      target: process.env.MEDIA_SERVER_URL,
-      changeOrigin: false,
-    })
-  );
-}
-
-const supergraphSdl = readFileSync("./supergraph.graphql").toString();
-
-class AuthenticatedDataSource extends FileUploadDataSource {
-  willSendRequest({
-    request,
-    context,
-  }: {
-    request: GraphQLRequest;
-    context: any;
-  }) {
-    request.http?.headers.set("token", JSON.stringify(context.token));
-    request.http?.headers.set("isauth", JSON.stringify(context.isAuth));
-  }
-}
+app.use(Router);
 
 const gateway = new ApolloGateway({
   supergraphSdl,
