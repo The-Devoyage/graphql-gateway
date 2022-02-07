@@ -3,7 +3,7 @@ ARG SUPERGRAPH
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY package*.json ./
-ADD $SUPERGRAPH ./
+ADD $SUPERGRAPH ./app/supergraph.graphql
 RUN npm install
 COPY . .
 RUN npm run build
