@@ -1,7 +1,9 @@
 FROM node:16.13.0 as npm-build
+ARG SUPERGRAPH
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY package*.json ./
+ADD $SUPERGRAPH ./
 RUN npm install
 COPY . .
 RUN npm run build
