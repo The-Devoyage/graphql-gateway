@@ -1,5 +1,5 @@
 {
-  "name": "graphql-gateway",
+  "name": "@the-devoyage/graphql-gateway",
   "version": "0.0.6",
   "description": "",
   "main": "server.js",
@@ -7,7 +7,6 @@
     "start": "node dist/server.js",
     "dev": "tsc -w & nodemon dist/server.js",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "supergraph": "rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql"
   },
   "author": "Nick McLean",

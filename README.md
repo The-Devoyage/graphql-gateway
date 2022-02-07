@@ -1,22 +1,20 @@
-# GraphQL Gateway - The Devoyage
+# The Devoyage GraphQL Gateway
 
-A simple to spin up and customize Apollo Gateway with pre-built Auth and File Uploading/Serving Features. Use it out of the box, or as a starting point to jump start your API design.
+A simple to spin up and customize Apollo Gateway with pre-built Authorization Checking and File Uploading/Serving features. Use it out of the box, or as a starting point to jump start your API design.
 
-## Built In Features
+## Features
 
 ### JSON Web Token Decryption
 
-All incoming request to the gateway are checked for a JSON Web Token. Auth context is generated and passed on to other micro services.
+All incoming request to the gateway are checked for a JSON Web Token. Auth context is then generated and passed on to other micro services.
 
 Set the JWT Decryption Key from within the Environment Variables to allow the Gateway to decode incoming tokens.
 
-All requests are passed on to the next microservice, with context to define the auth status, allowing the service to have more control over handling un-authenticated or restricted content.
-
 ### File Uploading and Serving
 
-File uploads are handled through an external services, but still pass through the Gateway with GraphQL Post Requests using `graphql-upload`, which is pre-configured out of the box.
+File uploads are handled through external services, but can pass through the Gateway first using `graphql-upload` and custom "Remote Data Source" Classes. This allows you to use graphql to upload new files.
 
-File serving is also handled through the gateway with express. Define the `route` such as `/public` (default) in the environment variable. Then, provide the location of the file server. Once the correct configuration has been implemented, you can request files from your gateway through the defined route.
+File serving is also handled with the gateway using express. Define the `route` such as `/public`, and the location of the upload/file server in the environment variables. All file requests that use the defiend route will bypass the graphql server in favor of an express proxy, directly to your file server.
 
 ## Usage
 
@@ -34,7 +32,7 @@ Rover CLI to generate Supergraph
 curl -sSL https://rover.apollo.dev/nix/latest | sh
 ```
 
-Project Dependencies:
+Install Dependencies:
 
 ```
 npm install
@@ -52,7 +50,7 @@ In development
 npm run dev
 ```
 
-or for production
+or In Production
 
 ```
 npm start
@@ -60,9 +58,11 @@ npm start
 
 5. Create a Supergraph config for use with Rover.
 
-   An example config is found in the root of the project at `./supergraph-config.yaml`. Spacing is important in a yaml file.
+   An example supergraph config is found in the root of the project at `./supergraph-config.yaml`. Spacing is important in a yaml file. Fill in the information about your existing services.
 
 6. Use Rover to generate the Supergraph.
+
+Once the server is up and running, run the following command to generate a supergraph.graphql file.
 
 ```
 rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
@@ -70,4 +70,4 @@ rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
 
 If you are using Docker or Docker-Compose, create a volume to mount the newly generated `supergraph.graphql` to `/app/supergraph.graphql`.
 
-7. Anytime a new supergraph is generated, you must restart the server.
+7. Anytime a new supergraph is generated, you must restart the server. Create new supergraphs as the typings of external services change.
