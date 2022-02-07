@@ -5,8 +5,8 @@ ENV PATH /app/node_modules/.bin:$PATH
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN echo $SUPERGRAPH
-RUN echo $SUPERGRAPH > /app/supergraph.graphql
+RUN echo "$SUPERGRAPH"
+RUN echo "$SUPERGRAPH" > /app/supergraph.graphql
 RUN npm run build
 
 FROM node:latest
