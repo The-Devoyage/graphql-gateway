@@ -1,13 +1,11 @@
 FROM node:16.13.0 as npm-build
 ARG SUPERGRAPH
-RUN echo "Try 3"
-RUN cat $SUPERGRAPH
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY package*.json ./
 RUN npm install
 COPY . .
-ADD $SUPERGRAPH ./app/supergraph.graphql
+RUN echo $SUPERGRAPH > ./app/supergraph.graphql
 RUN npm run build
 
 FROM node:latest
