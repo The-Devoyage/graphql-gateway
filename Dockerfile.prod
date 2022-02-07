@@ -1,7 +1,7 @@
 FROM node:16.13.0 as npm-build
 ARG SUPERGRAPH
-RUN echo "Try 2"
-RUN echo $SUPERGRAPH
+RUN echo "Try 3"
+RUN cat $SUPERGRAPH
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 COPY package*.json ./
