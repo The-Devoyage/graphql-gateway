@@ -1,4 +1,4 @@
-FROM node:14.17.0 as npm-build
+FROM node:16.13.2 as npm-build
 ARG GITHUB_TOKEN  
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
@@ -9,7 +9,7 @@ RUN rm -f .npmrc
 COPY . .
 RUN npm run build
 
-FROM node:14.17.0
+FROM node:16.13.2
 WORKDIR /app/dist
 RUN mkdir -p /app/dist/uploads
 COPY --from=npm-build /app/dist /app/dist
