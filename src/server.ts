@@ -4,12 +4,11 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
-import { isAuth } from "./middleware";
 import { ApolloGateway } from "@apollo/gateway";
 import { graphqlUploadExpress } from "graphql-upload";
 import { Router } from "./routes";
-import { AuthenticatedDataSource } from "@src/graphql";
 import { readFileSync } from "fs";
+import { Helpers } from "@the-devoyage/micro-auth-helpers";
 
 const supergraphSdl = readFileSync("./supergraph.graphql").toString();
 
@@ -24,8 +23,7 @@ app.use(Router);
 const gateway = new ApolloGateway({
   supergraphSdl,
   buildService({ url }) {
-    const dataSource = new AuthenticatedDataSource({ url });
-    return dataSource;
+    return new Helpers.Gateway.AuthDataSource({ url });
   },
 });
 
@@ -35,7 +33,10 @@ async function startServer() {
   apolloServer = new ApolloServer({
     gateway,
     context: ({ req }) => {
-      return isAuth(req);
+      return Helpers.Gateway.GenerateContext({
+        req,
+        secretOrPublicKey: process.env.JWT_ENCRYPTION_KEY,
+      });
     },
   });
   await apolloServer.start();
