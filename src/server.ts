@@ -23,7 +23,8 @@ app.use(Router);
 const gateway = new ApolloGateway({
   supergraphSdl,
   buildService({ url }) {
-    return new Helpers.Gateway.AuthDataSource({ url });
+    const dataSource = new Helpers.Gateway.AuthDataSource({ url });
+    return dataSource;
   },
 });
 
