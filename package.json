@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@apollo/gateway": "0.46.0",
+    "@the-devoyage/micro-auth-helpers": "^0.1.13",
     "apollo-server-express": "^3.5.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
