@@ -1,6 +1,6 @@
 {
   "name": "@the-devoyage/graphql-gateway",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@apollo/gateway": "0.46.0",
-    "@the-devoyage/micro-auth-helpers": "^0.1.12",
     "apollo-server-express": "^3.5.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",

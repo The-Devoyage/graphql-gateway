@@ -23,7 +23,7 @@ app.use(Router);
 const gateway = new ApolloGateway({
   supergraphSdl,
   buildService({ url }) {
-    const dataSource = new Helpers.Gateway.AuthDataSource({ url });
+    const dataSource = new Helpers.Gateway.ContextDataSource({ url });
     return dataSource;
   },
 });
@@ -35,6 +35,7 @@ async function startServer() {
     gateway,
     context: ({ req }) => {
       return Helpers.Gateway.GenerateContext({
+        headers: ["Authorization"],
         req,
         secretOrPublicKey: process.env.JWT_ENCRYPTION_KEY,
       });
