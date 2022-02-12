@@ -33,13 +33,12 @@ let apolloServer;
 async function startServer() {
   apolloServer = new ApolloServer({
     gateway,
-    context: ({ req }) => {
-      return Helpers.Gateway.GenerateContext({
+    context: ({ req }) =>
+      Helpers.Gateway.GenerateContext({
         headers: ["Authorization"],
         req,
         secretOrPublicKey: process.env.JWT_ENCRYPTION_KEY,
-      });
-    },
+      }),
   });
   await apolloServer.start();
   app.use(graphqlUploadExpress());
