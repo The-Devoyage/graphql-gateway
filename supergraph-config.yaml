@@ -3,14 +3,14 @@ subgraphs:
     routing_url: http://localhost:5001 
     schema:
       subgraph_url: http://localhost:5001 
-  #users:
-    #routing_url: http://localhost:5002
-    #schema:
-      #subgraph_url: http://localhost:5002
-  #meida:
-    #routing_url: http://media:5006/graphql
-    #schema:
-      #subgraph_url: http://localhost:5006/graphql
+  users:
+    routing_url: http://localhost:5002
+    schema:
+      subgraph_url: http://localhost:5002
+  meida:
+    routing_url: http://localhost:5006/graphql
+    schema:
+      subgraph_url: http://localhost:5006/graphql
   #mailer:
     #routing_url: http://mailer:5008/graphql
     #schema:

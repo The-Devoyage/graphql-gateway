@@ -19,19 +19,38 @@ directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on IN
 type Account
   @join__owner(graph: ACCOUNTS)
   @join__type(graph: ACCOUNTS, key: "_id")
+  @join__type(graph: USERS, key: "_id")
 {
   _id: ObjectID! @join__field(graph: ACCOUNTS)
   activation: Activation @join__field(graph: ACCOUNTS)
   createdAt: DateTime! @join__field(graph: ACCOUNTS)
   email: String! @join__field(graph: ACCOUNTS)
+  loginUser(loginUserInput: LoginUserInput): LoginUserResponse @join__field(graph: USERS, requires: "_id email")
   password: String @join__field(graph: ACCOUNTS)
   updatedAt: DateTime! @join__field(graph: ACCOUNTS)
+  users(getUsersInput: GetUsersInput!): GetUsersResponse @join__field(graph: USERS, requires: "_id")
 }
 
 type Activation {
   code: String
   limit: DateTime!
   verified: Boolean!
+}
+
+type Address {
+  city: String!
+  lineOne: String!
+  lineTwo: String
+  state: String!
+  zip: String!
+}
+
+input AddressInput {
+  city: String!
+  lineOne: String!
+  lineTwo: String
+  state: String!
+  zip: String!
 }
 
 enum ArrayFilterByEnum {
@@ -55,7 +74,25 @@ enum BooleanFilterByEnum {
   NE
 }
 
+input CreateMediaInput {
+  title: String!
+  type: String!
+}
+
+input CreateUserInput {
+  account: ID
+  email: String!
+  first_name: String
+  last_name: String
+  phone: String
+  profile_img: ID
+}
+
 scalar DateTime
+
+input DeleteUserInput {
+  _id: ObjectID!
+}
 
 input FilterConfig {
   operator: OperatorFieldConfigEnum
@@ -75,6 +112,39 @@ input GetAccountsInput {
 
 type GetAccountsResponse {
   data: [Account!]
+  stats: Stats
+}
+
+input GetMediaInput {
+  _id: StringFieldFilter
+  config: FilterConfig
+  createdAt: StringFieldFilter
+  created_by: StringFieldFilter
+  mimetype: StringFieldFilter
+  path: StringFieldFilter
+  title: StringFieldFilter
+  updatedAt: StringFieldFilter
+}
+
+type GetMediaResponse {
+  data: [Media]
+  stats: Stats
+}
+
+input GetUsersInput {
+  _id: StringFieldFilter
+  account: StringArrayFilter
+  config: FilterConfig
+  created_by: StringFieldFilter
+  email: StringFieldFilter
+  first_name: StringFieldFilter
+  image: StringFieldFilter
+  last_name: StringFieldFilter
+  phone: StringFieldFilter
+}
+
+type GetUsersResponse {
+  data: [User]
   stats: Stats
 }
 
@@ -108,12 +178,46 @@ input LoginInput {
   password: String!
 }
 
+input LoginUserCredentialsInput {
+  email: String!
+  password: String!
+}
+
+input LoginUserInput {
+  _id: ObjectID!
+  credentials: LoginUserCredentialsInput
+}
+
+type LoginUserResponse {
+  token: String!
+  user: User!
+}
+
+type Media
+  @join__owner(graph: MEIDA)
+  @join__type(graph: MEIDA, key: "_id")
+  @join__type(graph: USERS, key: "_id")
+{
+  _id: ObjectID! @join__field(graph: MEIDA)
+  createdAt: String! @join__field(graph: MEIDA)
+  created_by: User! @join__field(graph: MEIDA)
+  mimetype: String! @join__field(graph: MEIDA)
+  path: String! @join__field(graph: MEIDA)
+  title: String! @join__field(graph: MEIDA)
+  updatedAt: String! @join__field(graph: MEIDA)
+}
+
 type Mutation {
+  createUser(createUserInput: CreateUserInput!): User! @join__field(graph: USERS)
+  deleteUser(deleteUserInput: DeleteUserInput!): User! @join__field(graph: USERS)
   login(loginInput: LoginInput!): LoginAccountResponse! @join__field(graph: ACCOUNTS)
+  loginUser(loginUserInput: LoginUserInput!): LoginUserResponse! @join__field(graph: USERS)
   register(registerInput: RegisterInput!): Account! @join__field(graph: ACCOUNTS)
   resetActivationCode(resetCodeInput: ResetCodeInput!): Account! @join__field(graph: ACCOUNTS)
   resetPassword(resetInput: ResetPasswordInput!): Account! @join__field(graph: ACCOUNTS)
+  singleFileUpload(singleFileUploadInput: SingleFileUploadInput!): Media! @join__field(graph: MEIDA)
   updateEmail(updateEmailInput: UpdateEmailInput!): Account! @join__field(graph: ACCOUNTS)
+  updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
   verifyEmail(verifyEmailInput: VerifyEmailInput!): Account! @join__field(graph: ACCOUNTS)
 }
 
@@ -132,8 +236,11 @@ input Pagination {
 
 type Query {
   getAccounts(getAccountsInput: GetAccountsInput!): GetAccountsResponse! @join__field(graph: ACCOUNTS)
+  getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
   getMyAccount: Account! @join__field(graph: ACCOUNTS)
+  getUsers(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS)
   isAuthenticated: Boolean! @join__field(graph: ACCOUNTS)
+  me: User! @join__field(graph: USERS)
 }
 
 input RegisterInput {
@@ -151,6 +258,11 @@ input ResetPasswordInput {
   email: String!
   password: String!
   password2: String!
+}
+
+input SingleFileUploadInput {
+  file: Upload!
+  title: String!
 }
 
 type Stats {
@@ -181,6 +293,45 @@ input UpdateEmailInput {
   email: String!
 }
 
+input UpdateUserInput {
+  _id: ObjectID!
+  account: ObjectID
+  address: AddressInput
+  email: String
+  first_name: String
+  image: ObjectID
+  last_name: String
+  phone: String
+  profile_img: ObjectID
+  role: Int
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+type User
+  @join__owner(graph: USERS)
+  @join__type(graph: USERS, key: "_id")
+  @join__type(graph: USERS, key: "account")
+  @join__type(graph: MEIDA, key: "_id")
+{
+  _id: ObjectID! @join__field(graph: USERS)
+  account: Account! @join__field(graph: USERS)
+  address: Address @join__field(graph: USERS)
+  createdAt: DateTime! @join__field(graph: USERS)
+  created_by: User @join__field(graph: USERS)
+  email: String! @join__field(graph: USERS)
+  first_name: String @join__field(graph: USERS)
+  image: Media @join__field(graph: USERS)
+  last_name: String @join__field(graph: USERS)
+  password: String @join__field(graph: USERS)
+  phone: String @join__field(graph: USERS)
+  role: Int! @join__field(graph: USERS)
+  stripe_connected_account_id: String @join__field(graph: USERS)
+  stripe_customer_id: String @join__field(graph: USERS)
+  updatedAt: DateTime! @join__field(graph: USERS)
+}
+
 input VerifyEmailInput {
   code: String!
   email: String!
@@ -206,4 +357,6 @@ scalar join__FieldSet
 
 enum join__Graph {
   ACCOUNTS @join__graph(name: "accounts" url: "http://localhost:5001")
+  MEIDA @join__graph(name: "meida" url: "http://localhost:5006/graphql")
+  USERS @join__graph(name: "users" url: "http://localhost:5002")
 }

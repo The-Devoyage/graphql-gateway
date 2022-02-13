@@ -1,11 +1,11 @@
 {
   "name": "@the-devoyage/graphql-gateway",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node dist/server.js",
-    "dev": "tsc -w & nodemon dist/server.js",
+    "start": "tsc; node dist/server.js",
+    "dev": "tsc; tsc -w & nodemon dist/server.js",
     "build": "tsc",
     "supergraph": "rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql"
   },
