@@ -4,19 +4,19 @@ A simple to spin up and customize Apollo Gateway with pre-built Authorization Ch
 
 ## Features
 
-### JSON Web Token Decryption
+### Authentication and Authorization Built In
 
-All incoming request to the gateway are checked for a JSON Web Token. Auth context is then generated and passed on to other micro services.
+The `graphql-gateway` repo is ready to deploy with authorization and authentication features. Simply pass a JSON web token in the `Authorization` header with each request. It is NOT required to send the token.
 
-Set the JWT Decryption Key from within the Environment Variables to allow the Gateway to decode incoming tokens.
+All incoming request are checked for the token. If the environment variables are set properly, the server will decode the token's payload and send the context to all federated subgraphs automatically.
 
-### File Uploading and Serving
+### File Uploading and Serving - Routing Features
 
-File uploads are handled through external services, but can pass through the Gateway first using `graphql-upload` and custom "Remote Data Source" Classes. This allows you to use graphql to upload new files.
+File upload routing is pre-configured to allow file uploads to an external file upload server that is using the `graphql-upload` package. This repo uses `@profusion/apollo-federation-upload` package to route the files to the external file upload server out of the box. Note, this is not a file upload server.
 
-File serving is also handled with the gateway using express. Define the `route` such as `/public`, and the location of the upload/file server in the environment variables. All file requests that use the defiend route will bypass the graphql server in favor of an express proxy, directly to your file server.
+File serving is also enabled by default using proxies to serve static files from an external express server. These can be configured through environment variables. The gateway server proxies requests for files at a custom route, `/public` by default. All requests that use this endpoint are proxied to the uri set in the env vars.
 
-## Usage
+## Setup
 
 ### Clone and Setup
 
@@ -32,10 +32,24 @@ Rover CLI to generate Supergraph
 curl -sSL https://rover.apollo.dev/nix/latest | sh
 ```
 
+Login to Github NPM Registry:
+
+There are a few packages we use that are located within the NPM Github Registry -- Login, so that you may install them with NPM.
+
+```
+npm login --registry=https://npm.pkg.github.com
+```
+
 Install Dependencies:
 
 ```
 npm install
+```
+
+Note: If you are building with docker or docker compose, you will need to pass the github token to the build-args to allow the build process to have access to the Github NPM Registry. Set an environment variable before docker build processes to automatically inject the token. Be sure to expire the token after you have built.
+
+```bash
+export GITHUB_TOKEN=my_token
 ```
 
 3. Set Environment Variables
@@ -60,7 +74,7 @@ npm start
 
    An example supergraph config is found in the root of the project at `./supergraph-config.yaml`. Spacing is important in a yaml file. Fill in the information about your existing services.
 
-6. Use Rover to generate the Supergraph.
+6. Start the subgraphs and use Rover to generate the Supergraph.
 
 Once the server is up and running, run the following command to generate a supergraph.graphql file.
 
@@ -68,6 +82,6 @@ Once the server is up and running, run the following command to generate a super
 rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
 ```
 
-If you are using Docker or Docker-Compose, create a volume to mount the newly generated `supergraph.graphql` to `/app/supergraph.graphql`.
+If you are using Docker or Docker-Compose, create a volume to mount the newly generated `supergraph.graphql` to `/app/supergraph.graphql`. This will allow you to override the `supergraph.graphql` file that is default inside the container.
 
 7. Anytime a new supergraph is generated, you must restart the server. Create new supergraphs as the typings of external services change.
