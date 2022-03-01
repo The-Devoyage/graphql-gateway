@@ -28,7 +28,7 @@ type Account
   loginUser(loginUserInput: LoginUserInput): LoginUserResponse @join__field(graph: USERS, requires: "_id email")
   password: String @join__field(graph: ACCOUNTS)
   updatedAt: DateTime! @join__field(graph: ACCOUNTS)
-  users(getUsersInput: GetUsersInput!): GetUsersResponse @join__field(graph: USERS, requires: "_id")
+  users(getUsersInput: GetUsersInput!): GetUsersResponse @join__field(graph: USERS)
 }
 
 type Activation {
@@ -74,6 +74,40 @@ enum BooleanFilterByEnum {
   NE
 }
 
+type CompositionDetail {
+  trigger: String!
+  variables: [String]
+}
+
+type Content {
+  _id: ObjectID!
+  active: Boolean!
+  createdAt: DateTime!
+  created_by: ObjectID!
+  html: String!
+  layout: Layout
+  name: String!
+  plainText: String!
+  subject: String!
+  trigger: String!
+  updatedAt: DateTime!
+  variables: [String]
+}
+
+input CreateContentInput {
+  active: Boolean!
+  html: String!
+  name: String!
+  plainText: String!
+  subject: String!
+  trigger: String!
+}
+
+input CreateLayoutInput {
+  html: String!
+  name: String!
+}
+
 input CreateMediaInput {
   title: String!
   type: String!
@@ -89,6 +123,14 @@ input CreateUserInput {
 }
 
 scalar DateTime
+
+input DeleteContentInput {
+  _id: ObjectID!
+}
+
+input DeleteLayoutInput {
+  _id: ObjectID!
+}
 
 input DeleteUserInput {
   _id: ObjectID!
@@ -112,6 +154,40 @@ input GetAccountsInput {
 
 type GetAccountsResponse {
   data: [Account!]
+  stats: Stats
+}
+
+input GetContentsInput {
+  _id: StringFieldFilter
+  active: BooleanFieldFilter
+  config: FilterConfig
+  createdAt: StringFieldFilter
+  created_by: StringFieldFilter
+  html: StringFieldFilter
+  name: StringFieldFilter
+  plainText: StringFieldFilter
+  subject: StringFieldFilter
+  trigger: StringFieldFilter
+  updatedAt: StringFieldFilter
+}
+
+type GetContentsResponse {
+  data: [Content]
+  stats: Stats
+}
+
+input GetLayoutsInput {
+  _id: StringFieldFilter
+  config: FilterConfig
+  createdAt: StringFieldFilter
+  created_by: StringFieldFilter
+  html: StringFieldFilter
+  name: StringFieldFilter
+  updatedAt: StringFieldFilter
+}
+
+type GetLayoutsResponse {
+  data: [Layout]
   stats: Stats
 }
 
@@ -168,6 +244,15 @@ enum IntFilterByEnum {
   NE
 }
 
+type Layout {
+  _id: ObjectID!
+  createdAt: DateTime!
+  created_by: ObjectID!
+  html: String!
+  name: String!
+  updatedAt: DateTime!
+}
+
 type LoginAccountResponse {
   account: Account!
   token: String!
@@ -208,7 +293,11 @@ type Media
 }
 
 type Mutation {
+  createContent(createContentInput: CreateContentInput!): Content! @join__field(graph: MAILER)
+  createLayout(createLayoutInput: CreateLayoutInput!): Layout! @join__field(graph: MAILER)
   createUser(createUserInput: CreateUserInput!): User! @join__field(graph: USERS)
+  deleteContent(deleteContentInput: DeleteContentInput!): Content! @join__field(graph: MAILER)
+  deleteLayout(deleteLayoutInput: DeleteLayoutInput!): Layout! @join__field(graph: MAILER)
   deleteUser(deleteUserInput: DeleteUserInput!): User! @join__field(graph: USERS)
   login(loginInput: LoginInput!): LoginAccountResponse! @join__field(graph: ACCOUNTS)
   loginUser(loginUserInput: LoginUserInput!): LoginUserResponse! @join__field(graph: USERS)
@@ -216,7 +305,9 @@ type Mutation {
   resetActivationCode(resetCodeInput: ResetCodeInput!): Account! @join__field(graph: ACCOUNTS)
   resetPassword(resetInput: ResetPasswordInput!): Account! @join__field(graph: ACCOUNTS)
   singleFileUpload(singleFileUploadInput: SingleFileUploadInput!): Media! @join__field(graph: MEIDA)
+  updateContent(updateContentInput: UpdateContentInput!): Content! @join__field(graph: MAILER)
   updateEmail(updateEmailInput: UpdateEmailInput!): Account! @join__field(graph: ACCOUNTS)
+  updateLayout(updateLayoutInput: UpdateLayoutInput!): Layout! @join__field(graph: MAILER)
   updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
   verifyEmail(verifyEmailInput: VerifyEmailInput!): Account! @join__field(graph: ACCOUNTS)
 }
@@ -236,6 +327,9 @@ input Pagination {
 
 type Query {
   getAccounts(getAccountsInput: GetAccountsInput!): GetAccountsResponse! @join__field(graph: ACCOUNTS)
+  getCompositionDetails: [CompositionDetail]! @join__field(graph: MAILER)
+  getContents(getContentsInput: GetContentsInput!): GetContentsResponse! @join__field(graph: MAILER)
+  getLayouts(getLayoutsInput: GetLayoutsInput!): GetLayoutsResponse! @join__field(graph: MAILER)
   getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
   getMyAccount: Account! @join__field(graph: ACCOUNTS)
   getUsers(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS)
@@ -289,8 +383,26 @@ enum StringFilterByEnum {
   REGEX
 }
 
+input UpdateContentInput {
+  _id: ObjectID!
+  active: Boolean
+  html: String
+  layout: ObjectID
+  name: String
+  plainText: String
+  subject: String
+  trigger: String
+  variables: [String]
+}
+
 input UpdateEmailInput {
   email: String!
+}
+
+input UpdateLayoutInput {
+  _id: ObjectID!
+  html: String
+  name: String
 }
 
 input UpdateUserInput {
@@ -357,6 +469,7 @@ scalar join__FieldSet
 
 enum join__Graph {
   ACCOUNTS @join__graph(name: "accounts" url: "http://localhost:5001")
+  MAILER @join__graph(name: "mailer" url: "http://mailer:5008/graphql")
   MEIDA @join__graph(name: "meida" url: "http://localhost:5006/graphql")
   USERS @join__graph(name: "users" url: "http://localhost:5002")
 }

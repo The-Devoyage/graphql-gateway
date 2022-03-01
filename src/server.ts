@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(Router);
 
 const gateway = new ApolloGateway({
-  supergraphSdl,
+  supergraphSdl: supergraphSdl ?? "",
   buildService({ url }) {
     const dataSource = new Helpers.Gateway.ContextDataSource({ url });
     return dataSource;
