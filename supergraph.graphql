@@ -19,16 +19,16 @@ directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on IN
 type Account
   @join__owner(graph: ACCOUNTS)
   @join__type(graph: ACCOUNTS, key: "_id")
+  @join__type(graph: PAYWALLS, key: "_id")
   @join__type(graph: USERS, key: "_id")
 {
   _id: ObjectID! @join__field(graph: ACCOUNTS)
   activation: Activation @join__field(graph: ACCOUNTS)
   createdAt: DateTime! @join__field(graph: ACCOUNTS)
   email: String! @join__field(graph: ACCOUNTS)
-  loginUser(loginUserInput: LoginUserInput): LoginUserResponse @join__field(graph: USERS, requires: "_id email")
   password: String @join__field(graph: ACCOUNTS)
   updatedAt: DateTime! @join__field(graph: ACCOUNTS)
-  users(getUsersInput: GetUsersInput!): GetUsersResponse @join__field(graph: USERS)
+  users(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS, requires: "_id email")
 }
 
 type Activation {
@@ -58,181 +58,187 @@ enum ArrayFilterByEnum {
   NIN
 }
 
-input BooleanArrayFilter {
-  arrayOptions: ArrayFilterByEnum!
-  bool: Boolean!
-  filterBy: BooleanFilterByEnum!
-}
-
+"""Filter for documents which have a property that is a Boolean."""
 input BooleanFieldFilter {
   bool: Boolean!
   filterBy: BooleanFilterByEnum!
+  groups: [String!]
+  operator: OperatorFieldConfigEnum
 }
 
+"""Equal or Not Equal"""
 enum BooleanFilterByEnum {
   EQ
   NE
 }
 
-type CompositionDetail {
-  trigger: String!
-  variables: [String]
+input CreatePaywallInput {
+  description: String!
+  product_id: ID!
+  status: PaywallStatusEnum
 }
 
-type Content {
-  _id: ObjectID!
-  active: Boolean!
-  createdAt: DateTime!
-  created_by: ObjectID!
-  html: String!
-  layout: Layout
+input CreatePaywallPurchaseInput {
+  account: ObjectID
+  paywall: ObjectID!
+  status: PaywallPurchaseStatusEnum!
+}
+
+input CreateServiceInput {
+  limits: [PaywallLimitInput!]!
   name: String!
-  plainText: String!
-  subject: String!
-  trigger: String!
-  updatedAt: DateTime!
-  variables: [String]
+  webhook: String
 }
 
-input CreateContentInput {
-  active: Boolean!
-  html: String!
-  name: String!
-  plainText: String!
-  subject: String!
-  trigger: String!
+"""Filter for documents which have a property that is a Date."""
+input DateFieldFilter {
+  date: DateTime!
+  filterBy: DateFilterByEnum!
+  groups: [String!]
+  operator: OperatorFieldConfigEnum
 }
 
-input CreateLayoutInput {
-  html: String!
-  name: String!
-}
-
-input CreateMediaInput {
-  title: String!
-  type: String!
-}
-
-input CreateUserInput {
-  account: ID
-  email: String!
-  first_name: String
-  last_name: String
-  phone: String
-  profile_img: ID
+enum DateFilterByEnum {
+  EQ
+  GT
+  GTE
+  LT
+  LTE
+  NE
 }
 
 scalar DateTime
 
-input DeleteContentInput {
-  _id: ObjectID!
+input DeleteMediaInput {
+  _ids: [ObjectID!]!
 }
 
-input DeleteLayoutInput {
-  _id: ObjectID!
+type DeleteMediaResponse {
+  deletedCount: Int!
 }
 
 input DeleteUserInput {
   _id: ObjectID!
 }
 
+"""Global configuration details."""
 input FilterConfig {
-  operator: OperatorFieldConfigEnum
   pagination: Pagination
 }
 
 input GetAccountsActivationInput {
-  verified: BooleanFieldFilter!
+  verified: [BooleanFieldFilter!]!
 }
 
 input GetAccountsInput {
-  _id: StringFieldFilter
+  _id: [StringFieldFilter]
   activation: GetAccountsActivationInput
   config: FilterConfig
-  email: StringFieldFilter
+  createdAt: [DateFieldFilter]
+  email: [StringFieldFilter]
+  updatedAt: [DateFieldFilter]
 }
 
 type GetAccountsResponse {
-  data: [Account!]
-  stats: Stats
-}
-
-input GetContentsInput {
-  _id: StringFieldFilter
-  active: BooleanFieldFilter
-  config: FilterConfig
-  createdAt: StringFieldFilter
-  created_by: StringFieldFilter
-  html: StringFieldFilter
-  name: StringFieldFilter
-  plainText: StringFieldFilter
-  subject: StringFieldFilter
-  trigger: StringFieldFilter
-  updatedAt: StringFieldFilter
-}
-
-type GetContentsResponse {
-  data: [Content]
-  stats: Stats
-}
-
-input GetLayoutsInput {
-  _id: StringFieldFilter
-  config: FilterConfig
-  createdAt: StringFieldFilter
-  created_by: StringFieldFilter
-  html: StringFieldFilter
-  name: StringFieldFilter
-  updatedAt: StringFieldFilter
-}
-
-type GetLayoutsResponse {
-  data: [Layout]
-  stats: Stats
+  data: [Account!]!
+  stats: Stats!
 }
 
 input GetMediaInput {
+  _id: [StringFieldFilter]
+  config: FilterConfig
+  createdAt: [DateFieldFilter]
+  created_by: [StringFieldFilter]
+  mimetype: [StringFieldFilter]
+  path: [StringFieldFilter]
+  title: [StringFieldFilter]
+  updatedAt: [DateFieldFilter]
+}
+
+type GetMediaResponse {
+  data: [Media!]!
+  stats: Stats!
+}
+
+input GetPaywallPurchasesInput {
+  _id: StringFieldFilter
+  account: StringFieldFilter
+  config: FilterConfig
+  createdAt: StringFieldFilter
+  created_by: StringFieldFilter
+  paywall: StringFieldFilter
+  status: StringFieldFilter
+  updatedAt: StringFieldFilter
+}
+
+type GetPaywallPurchasesResponse {
+  data: [PaywallPurchase!]!
+  stats: Stats!
+}
+
+input GetPaywallsInput {
   _id: StringFieldFilter
   config: FilterConfig
   createdAt: StringFieldFilter
   created_by: StringFieldFilter
-  mimetype: StringFieldFilter
-  path: StringFieldFilter
-  title: StringFieldFilter
+  productId: StringFieldFilter
+  status: StringFieldFilter
   updatedAt: StringFieldFilter
 }
 
-type GetMediaResponse {
-  data: [Media]
-  stats: Stats
+type GetPaywallsResponse {
+  data: [Paywall!]!
+  stats: Stats!
+}
+
+input GetServicesInput {
+  _id: StringFieldFilter
+  config: FilterConfig
+  createdAt: StringFieldFilter
+  created_by: StringFieldFilter
+  name: StringFieldFilter
+  updatedAt: StringFieldFilter
+}
+
+type GetServicesResponse {
+  data: [Service!]!
+  stats: Stats!
+}
+
+input GetUserByMembershipInput {
+  _id: StringFieldFilter
+  account: StringFieldFilter
+  createdAt: DateFieldFilter
+  role: [IntFieldFilter]
+  status: [StringFieldFilter]
+  updatedAt: DateFieldFilter
 }
 
 input GetUsersInput {
-  _id: StringFieldFilter
-  account: StringArrayFilter
+  _id: [StringFieldFilter]
   config: FilterConfig
-  created_by: StringFieldFilter
-  email: StringFieldFilter
-  first_name: StringFieldFilter
-  image: StringFieldFilter
-  last_name: StringFieldFilter
-  phone: StringFieldFilter
+  createdAt: [DateFieldFilter]
+  created_by: [StringFieldFilter]
+  email: [StringFieldFilter]
+  first_name: [StringFieldFilter]
+  image: [StringFieldFilter]
+  last_name: [StringFieldFilter]
+  memberships: [GetUserByMembershipInput]
+  phone: [StringFieldFilter]
+  updatedAt: [DateFieldFilter]
 }
 
 type GetUsersResponse {
-  data: [User]
-  stats: Stats
+  data: [User!]!
+  stats: Stats!
 }
 
-input IntArrayFilter {
-  arrayOptions: ArrayFilterByEnum!
-  filterBy: IntFilterByEnum!
-  int: Int!
-}
-
+"""Filter for documents which have a property that is an Integer."""
 input IntFieldFilter {
   filterBy: IntFilterByEnum!
+  groups: [String!]
   int: Int!
+  operator: OperatorFieldConfigEnum
 }
 
 enum IntFilterByEnum {
@@ -244,13 +250,33 @@ enum IntFilterByEnum {
   NE
 }
 
-type Layout {
-  _id: ObjectID!
-  createdAt: DateTime!
-  created_by: ObjectID!
-  html: String!
+input InviteUserInput {
+  email: String!
+  local: LocalMembershipInput
+  role: Int
+}
+
+type Limit {
   name: String!
-  updatedAt: DateTime!
+  scopes: [Scope!]!
+}
+
+input LocalMembershipInput {
+  about: String
+  address: AddressInput
+  first_name: String
+  image: ObjectID
+  last_name: String
+  phone: String
+}
+
+type LocalUserDetails {
+  about: String
+  address: Address
+  first_name: String
+  image: Media
+  last_name: String
+  phone: String
 }
 
 type LoginAccountResponse {
@@ -261,16 +287,6 @@ type LoginAccountResponse {
 input LoginInput {
   email: String!
   password: String!
-}
-
-input LoginUserCredentialsInput {
-  email: String!
-  password: String!
-}
-
-input LoginUserInput {
-  _id: ObjectID!
-  credentials: LoginUserCredentialsInput
 }
 
 type LoginUserResponse {
@@ -284,30 +300,59 @@ type Media
   @join__type(graph: USERS, key: "_id")
 {
   _id: ObjectID! @join__field(graph: MEIDA)
-  createdAt: String! @join__field(graph: MEIDA)
+  createdAt: DateTime! @join__field(graph: MEIDA)
   created_by: User! @join__field(graph: MEIDA)
   mimetype: String! @join__field(graph: MEIDA)
   path: String! @join__field(graph: MEIDA)
   title: String! @join__field(graph: MEIDA)
-  updatedAt: String! @join__field(graph: MEIDA)
+  updatedAt: DateTime! @join__field(graph: MEIDA)
+}
+
+type Membership {
+  _id: ObjectID!
+  account: Account!
+  createdAt: DateTime!
+  created_by: User!
+  default: Boolean!
+  local: LocalUserDetails
+  role: Int!
+  status: MembershipStatusEnum
+  updatedAt: DateTime!
+}
+
+input MembershipInput {
+  account: ObjectID!
+  default: Boolean
+  local: LocalMembershipInput
+  role: Int
+  status: MembershipStatusEnum
+}
+
+enum MembershipStatusEnum {
+  ACTIVE
+  INACTIVE
+  PENDING
+  REVOKED
 }
 
 type Mutation {
-  createContent(createContentInput: CreateContentInput!): Content! @join__field(graph: MAILER)
-  createLayout(createLayoutInput: CreateLayoutInput!): Layout! @join__field(graph: MAILER)
-  createUser(createUserInput: CreateUserInput!): User! @join__field(graph: USERS)
-  deleteContent(deleteContentInput: DeleteContentInput!): Content! @join__field(graph: MAILER)
-  deleteLayout(deleteLayoutInput: DeleteLayoutInput!): Layout! @join__field(graph: MAILER)
+  createPaywall(createPaywallInput: CreatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
+  createPaywallPurchase(createPaywallPurchaseInput: CreatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
+  createService(createServiceInput: CreateServiceInput!): Service! @join__field(graph: PAYWALLS)
+  deleteMedia(deleteMediaInput: DeleteMediaInput!): DeleteMediaResponse! @join__field(graph: MEIDA)
   deleteUser(deleteUserInput: DeleteUserInput!): User! @join__field(graph: USERS)
+  inviteUser(inviteUserInput: InviteUserInput!): User! @join__field(graph: USERS)
   login(loginInput: LoginInput!): LoginAccountResponse! @join__field(graph: ACCOUNTS)
-  loginUser(loginUserInput: LoginUserInput!): LoginUserResponse! @join__field(graph: USERS)
+  loginUser: LoginUserResponse! @join__field(graph: USERS)
   register(registerInput: RegisterInput!): Account! @join__field(graph: ACCOUNTS)
   resetActivationCode(resetCodeInput: ResetCodeInput!): Account! @join__field(graph: ACCOUNTS)
   resetPassword(resetInput: ResetPasswordInput!): Account! @join__field(graph: ACCOUNTS)
   singleFileUpload(singleFileUploadInput: SingleFileUploadInput!): Media! @join__field(graph: MEIDA)
-  updateContent(updateContentInput: UpdateContentInput!): Content! @join__field(graph: MAILER)
+  switchUserMembership(switchUserMembershipInput: SwitchUserMembershipInput!): LoginUserResponse! @join__field(graph: USERS)
   updateEmail(updateEmailInput: UpdateEmailInput!): Account! @join__field(graph: ACCOUNTS)
-  updateLayout(updateLayoutInput: UpdateLayoutInput!): Layout! @join__field(graph: MAILER)
+  updatePaywall(updatePaywallInput: UpdatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
+  updatePaywallPurchase(updatePaywallPurchaseInput: UpdatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
+  updateService(updateServiceInput: UpdateServiceInput!): Service! @join__field(graph: PAYWALLS)
   updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
   verifyEmail(verifyEmailInput: VerifyEmailInput!): Account! @join__field(graph: ACCOUNTS)
 }
@@ -325,13 +370,55 @@ input Pagination {
   reverse: Boolean
 }
 
+type Paywall
+  @join__owner(graph: PAYWALLS)
+  @join__type(graph: PAYWALLS, key: "_id")
+{
+  _id: ObjectID! @join__field(graph: PAYWALLS)
+  createdAt: DateTime! @join__field(graph: PAYWALLS)
+  created_by: User! @join__field(graph: PAYWALLS)
+  description: String! @join__field(graph: PAYWALLS)
+  product_id: ID! @join__field(graph: PAYWALLS)
+  status: PaywallStatusEnum! @join__field(graph: PAYWALLS)
+  updatedAt: DateTime! @join__field(graph: PAYWALLS)
+}
+
+input PaywallLimitInput {
+  name: String!
+  scopes: [ScopeInput!]!
+}
+
+type PaywallPurchase {
+  _id: ObjectID!
+  account: Account!
+  createdAt: DateTime!
+  created_by: User!
+  paywall: Paywall!
+  status: PaywallPurchaseStatusEnum!
+  updatedAt: DateTime!
+}
+
+enum PaywallPurchaseStatusEnum {
+  ACTIVE
+  CREATED
+  INACTIVE
+  PAYMENT_DECLINED
+  PAYMENT_PENDING
+  TERMINATED
+}
+
+enum PaywallStatusEnum {
+  ACTIVE
+  INACTIVE
+}
+
 type Query {
   getAccounts(getAccountsInput: GetAccountsInput!): GetAccountsResponse! @join__field(graph: ACCOUNTS)
-  getCompositionDetails: [CompositionDetail]! @join__field(graph: MAILER)
-  getContents(getContentsInput: GetContentsInput!): GetContentsResponse! @join__field(graph: MAILER)
-  getLayouts(getLayoutsInput: GetLayoutsInput!): GetLayoutsResponse! @join__field(graph: MAILER)
   getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
   getMyAccount: Account! @join__field(graph: ACCOUNTS)
+  getPaywallPurchases(getPaywallPurchasesInput: GetPaywallPurchasesInput!): GetPaywallPurchasesResponse! @join__field(graph: PAYWALLS)
+  getPaywalls(getPaywallsInput: GetPaywallsInput!): GetPaywallsResponse! @join__field(graph: PAYWALLS)
+  getServices(getServicesInput: GetServicesInput!): GetServicesResponse! @join__field(graph: PAYWALLS)
   getUsers(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS)
   isAuthenticated: Boolean! @join__field(graph: ACCOUNTS)
   me: User! @join__field(graph: USERS)
@@ -354,6 +441,26 @@ input ResetPasswordInput {
   password2: String!
 }
 
+type Scope {
+  paywall: Paywall!
+  quantity: Int!
+}
+
+input ScopeInput {
+  paywall: ObjectID!
+  quantity: Int!
+}
+
+type Service {
+  _id: ObjectID!
+  createdAt: DateTime!
+  created_by: User!
+  limits: [Limit!]!
+  name: String!
+  updatedAt: DateTime!
+  webhook: String
+}
+
 input SingleFileUploadInput {
   file: Upload!
   title: String!
@@ -366,14 +473,24 @@ type Stats {
   total: Int
 }
 
-input StringArrayFilter {
+"""
+Filter for documents which have a property that is an array of strings..
+"""
+input StringArrayFieldFilter {
   arrayOptions: ArrayFilterByEnum!
   filterBy: StringFilterByEnum!
+  groups: [String!]
+  operator: OperatorFieldConfigEnum
   string: [String!]!
 }
 
+"""
+Filter for documents which have a property that is a string. Filter by REGEX, ObjectID, or Match.
+"""
 input StringFieldFilter {
   filterBy: StringFilterByEnum!
+  groups: [String!]
+  operator: OperatorFieldConfigEnum
   string: String!
 }
 
@@ -383,39 +500,44 @@ enum StringFilterByEnum {
   REGEX
 }
 
-input UpdateContentInput {
-  _id: ObjectID!
-  active: Boolean
-  html: String
-  layout: ObjectID
-  name: String
-  plainText: String
-  subject: String
-  trigger: String
-  variables: [String]
+input SwitchUserMembershipInput {
+  membership_id: ObjectID!
 }
 
 input UpdateEmailInput {
   email: String!
 }
 
-input UpdateLayoutInput {
-  _id: ObjectID!
-  html: String
+input UpdatePaywallInput {
+  description: String
+  paywall: GetPaywallsInput!
+  product_id: ID
+  status: PaywallStatusEnum
+}
+
+input UpdatePaywallPurchaseInput {
+  account: ObjectID
+  paywallPurchase: GetPaywallPurchasesInput!
+  status: PaywallPurchaseStatusEnum
+}
+
+input UpdateServiceInput {
+  limits: [PaywallLimitInput!]
   name: String
+  service: GetServicesInput!
+  webhook: String
 }
 
 input UpdateUserInput {
-  _id: ObjectID!
-  account: ObjectID
+  about: String
   address: AddressInput
   email: String
   first_name: String
   image: ObjectID
   last_name: String
+  memberships: MembershipInput
   phone: String
-  profile_img: ObjectID
-  role: Int
+  user: GetUsersInput!
 }
 
 """The `Upload` scalar type represents a file upload."""
@@ -424,11 +546,11 @@ scalar Upload
 type User
   @join__owner(graph: USERS)
   @join__type(graph: USERS, key: "_id")
-  @join__type(graph: USERS, key: "account")
   @join__type(graph: MEIDA, key: "_id")
+  @join__type(graph: PAYWALLS, key: "_id")
 {
   _id: ObjectID! @join__field(graph: USERS)
-  account: Account! @join__field(graph: USERS)
+  about: String @join__field(graph: USERS)
   address: Address @join__field(graph: USERS)
   createdAt: DateTime! @join__field(graph: USERS)
   created_by: User @join__field(graph: USERS)
@@ -436,11 +558,8 @@ type User
   first_name: String @join__field(graph: USERS)
   image: Media @join__field(graph: USERS)
   last_name: String @join__field(graph: USERS)
-  password: String @join__field(graph: USERS)
+  memberships: [Membership!]! @join__field(graph: USERS)
   phone: String @join__field(graph: USERS)
-  role: Int! @join__field(graph: USERS)
-  stripe_connected_account_id: String @join__field(graph: USERS)
-  stripe_customer_id: String @join__field(graph: USERS)
   updatedAt: DateTime! @join__field(graph: USERS)
 }
 
@@ -469,7 +588,7 @@ scalar join__FieldSet
 
 enum join__Graph {
   ACCOUNTS @join__graph(name: "accounts" url: "http://localhost:5001")
-  MAILER @join__graph(name: "mailer" url: "http://mailer:5008/graphql")
   MEIDA @join__graph(name: "meida" url: "http://localhost:5006/graphql")
+  PAYWALLS @join__graph(name: "paywalls" url: "http://localhost:5010/graphql")
   USERS @join__graph(name: "users" url: "http://localhost:5002")
 }

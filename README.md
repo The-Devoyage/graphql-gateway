@@ -20,9 +20,7 @@ File serving is also enabled by default using proxies to serve static files from
 
 ### Clone and Setup
 
-1. Purchase access from our [Basetools Account](https://www.google.com).
-
-2. Next, install dependencies.
+1. Next, install dependencies.
 
 Global Dependencies:
 
@@ -46,17 +44,11 @@ Install Dependencies:
 npm install
 ```
 
-Note: If you are building with docker or docker compose, you will need to pass the github token to the build-args to allow the build process to have access to the Github NPM Registry. Set an environment variable before docker build processes to automatically inject the token. Be sure to expire the token after you have built.
-
-```bash
-export GITHUB_TOKEN=my_token
-```
-
-3. Set Environment Variables
+2. Set Environment Variables
 
    Copy the `.env.example` file to `.env` and fill in the variables. If you are using docker or docker-compose, you can use the various built in environment variable options to set these variables.
 
-4. Run the application.
+3. Run the application.
 
 In development
 
@@ -70,11 +62,11 @@ or In Production
 npm start
 ```
 
-5. Create a Supergraph config for use with Rover.
+4. Create a Supergraph config for use with Rover.
 
    An example supergraph config is found in the root of the project at `./supergraph-config.yaml`. Spacing is important in a yaml file. Fill in the information about your existing services.
 
-6. Start the subgraphs and use Rover to generate the Supergraph.
+5. Start the subgraphs and use Rover to generate the Supergraph.
 
 Once the server is up and running, run the following command to generate a supergraph.graphql file.
 
