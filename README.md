@@ -16,6 +16,10 @@ File upload routing is pre-configured to allow file uploads to an external file 
 
 File serving is also enabled by default using proxies to serve static files from an external express server. These can be configured through environment variables. The gateway server proxies requests for files at a custom route, `/public` by default. All requests that use this endpoint are proxied to the uri set in the env vars.
 
+## License
+
+This repository provides a GPL License by default. If you want to use this product in a private commericial setting, you may purchase the MIT Licensed Version [Here!](https://thedevoyage.gumroad.com/l/graphql-gateway)
+
 ## Setup
 
 ### Clone and Setup
