@@ -1,3 +1,4 @@
+federation_version: 2
 subgraphs:
   accounts:
     routing_url: http://localhost:5001
@@ -11,10 +12,10 @@ subgraphs:
     routing_url: http://localhost:5006/graphql
     schema:
       subgraph_url: http://localhost:5006/graphql
-  # mailer:
-  #   routing_url: http://mailer:5008/graphql
-  #   schema:
-  #     subgraph_url: http://localhost:5008/graphql
+  mailer:
+    routing_url: http://mailer:5008/graphql
+    schema:
+      subgraph_url: http://localhost:5008/graphql
   paywalls:
     routing_url: http://localhost:5010/graphql
     schema:

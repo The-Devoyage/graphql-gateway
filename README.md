@@ -28,11 +28,7 @@ This repository provides a GPL License by default. If you want to use this produ
 
 Global Dependencies:
 
-Rover CLI to generate Supergraph
-
-```
-curl -sSL https://rover.apollo.dev/nix/latest | sh
-```
+Rover CLI to generate Supergraph - Documentation about Rover is provided on the Apollo Rover website.
 
 Login to Github NPM Registry:
 
@@ -50,7 +46,7 @@ npm install
 
 2. Set Environment Variables
 
-   Copy the `.env.example` file to `.env` and fill in the variables. If you are using docker or docker-compose, you can use the various built in environment variable options to set these variables.
+   Copy the `.env.example` file to `.env` and fill in the variables. 
 
 3. Run the application.
 
@@ -68,16 +64,23 @@ npm start
 
 4. Create a Supergraph config for use with Rover.
 
-   An example supergraph config is found in the root of the project at `./supergraph-config.yaml`. Spacing is important in a yaml file. Fill in the information about your existing services.
+   An example supergraph config is found in the root of the project at `./supergraph-config.yaml`.
 
 5. Start the subgraphs and use Rover to generate the Supergraph.
 
-Once the server is up and running, run the following command to generate a supergraph.graphql file.
+Once the server is up and running, run the following command to generate a `supergraph.graphql` file.
 
 ```
 rover supergraph compose --config ./supergraph-config.yaml > supergraph.graphql
 ```
 
+You may also use the npm script:
+
+```
+npm run supergraph
+```
+
 If you are using Docker or Docker-Compose, create a volume to mount the newly generated `supergraph.graphql` to `/app/supergraph.graphql`. This will allow you to override the `supergraph.graphql` file that is default inside the container.
 
 7. Anytime a new supergraph is generated, you must restart the server. Create new supergraphs as the typings of external services change.
+
