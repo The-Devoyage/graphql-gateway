@@ -52,23 +52,24 @@ type Activation
 type Address
   @join__type(graph: USERS)
 {
-  lineOne: String!
+  lineOne: String
   lineTwo: String
-  city: String!
-  state: String!
-  zip: PostalCode!
-  country: CountryCode!
+  city: String
+  state: String
+  zip: PostalCode
+  country: CountryCode
+  _id: ObjectID
 }
 
 input AddressInput
   @join__type(graph: USERS)
 {
-  lineOne: String!
+  lineOne: String
   lineTwo: String
-  city: String!
-  state: String!
-  zip: PostalCode!
-  country: CountryCode!
+  city: String
+  state: String
+  zip: PostalCode
+  country: CountryCode
 }
 
 enum ArrayFilterByEnum
@@ -108,13 +109,6 @@ enum BooleanFilterByEnum
   NE
 }
 
-type CompositionDetail
-  @join__type(graph: MAILER)
-{
-  trigger: String!
-  variables: [String]
-}
-
 type Content
   @join__type(graph: MAILER)
 {
@@ -123,7 +117,7 @@ type Content
   subject: String!
   plainText: String!
   html: String!
-  created_by: ObjectID!
+  created_by: User!
   createdAt: DateTime!
   updatedAt: DateTime!
   trigger: String!
@@ -132,10 +126,22 @@ type Content
   variables: [String]
 }
 
-scalar CountryCode
-  @join__type(graph: USERS)
+input ContentFieldFiltersInput
+  @join__type(graph: MAILER)
+{
+  _id: [StringFieldFilter]
+  name: [StringFieldFilter]
+  subject: [StringFieldFilter]
+  plainText: [StringFieldFilter]
+  html: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+  trigger: [StringFieldFilter]
+  active: [BooleanFieldFilter]
+}
 
-input CreateContentInput
+input ContentInput
   @join__type(graph: MAILER)
 {
   name: String!
@@ -144,44 +150,58 @@ input CreateContentInput
   html: String!
   trigger: String!
   active: Boolean!
+  layout: ObjectID
+  variables: [String]
+}
+
+scalar CountryCode
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+input CreateContentInput
+  @join__type(graph: MAILER)
+{
+  payload: ContentInput!
 }
 
 input CreateLayoutInput
   @join__type(graph: MAILER)
 {
-  name: String!
-  html: String!
+  payload: LayoutInput!
 }
 
 input CreateMediaInput
   @join__type(graph: MEIDA)
 {
-  payload: MediaPayloadInput!
+  payload: [MediaPayloadInput!]!
+}
+
+type CreateMediaResponse
+  @join__type(graph: MEIDA)
+{
+  media: [Media!]!
+  errors: [UploadError!]!
 }
 
 input CreatePaywallInput
   @join__type(graph: PAYWALLS)
 {
-  product_id: ID!
-  status: PaywallStatusEnum
-  description: String!
-  name: String!
+  payload: PaywallInput!
 }
 
 input CreatePaywallPurchaseInput
   @join__type(graph: PAYWALLS)
 {
-  account: ObjectID
-  paywall: ObjectID!
-  status: PaywallPurchaseStatusEnum
+  payload: PaywallPurchaseInput!
 }
 
 input CreateServiceInput
   @join__type(graph: PAYWALLS)
 {
-  name: String!
-  limits: [PaywallLimitInput!]!
-  webhook: String
+  payload: ServiceInput!
 }
 
 input CreateUserInput
@@ -226,16 +246,16 @@ scalar DateTime
   @join__type(graph: PAYWALLS)
   @join__type(graph: USERS)
 
-input DeleteContentInput
+input DeleteContentsInput
   @join__type(graph: MAILER)
 {
-  _id: ObjectID!
+  query: ContentFieldFiltersInput!
 }
 
-input DeleteLayoutInput
+input DeleteLayoutsInput
   @join__type(graph: MAILER)
 {
-  _id: ObjectID!
+  query: LayoutFieldFiltersInput!
 }
 
 input DeleteMediaInput
@@ -250,7 +270,14 @@ type DeleteMediaResponse
   deletedCount: Int!
 }
 
-input DeleteUserInput
+type DeleteResponse
+  @join__type(graph: MAILER)
+  @join__type(graph: USERS)
+{
+  deletedCount: Int!
+}
+
+input DeleteUsersInput
   @join__type(graph: USERS)
 {
   query: UserFieldFiltersInput!
@@ -258,8 +285,25 @@ input DeleteUserInput
 
 scalar EmailAddress
   @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
   @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
   @join__type(graph: USERS)
+
+enum ExtensionEnum
+  @join__type(graph: MEIDA)
+{
+  PNG
+  JPG
+  JPEG
+  SVG
+  WEBP
+  AVIF
+  GIF
+  ICO
+  BMP
+  TIFF
+}
 
 """Global configuration details."""
 input FilterConfig
@@ -296,16 +340,7 @@ type GetAccountsResponse
 input GetContentsInput
   @join__type(graph: MAILER)
 {
-  _id: [StringFieldFilter]
-  name: [StringFieldFilter]
-  subject: [StringFieldFilter]
-  plainText: [StringFieldFilter]
-  html: [StringFieldFilter]
-  created_by: [StringFieldFilter]
-  createdAt: [DateFieldFilter]
-  updatedAt: [DateFieldFilter]
-  trigger: [StringFieldFilter]
-  active: [BooleanFieldFilter]
+  query: ContentFieldFiltersInput!
   config: FilterConfig
 }
 
@@ -319,12 +354,7 @@ type GetContentsResponse
 input GetLayoutsInput
   @join__type(graph: MAILER)
 {
-  _id: [StringFieldFilter]
-  name: [StringFieldFilter]
-  html: [StringFieldFilter]
-  createdAt: [DateFieldFilter]
-  updatedAt: [DateFieldFilter]
-  created_by: [StringFieldFilter]
+  query: LayoutFieldFiltersInput!
   config: FilterConfig
 }
 
@@ -340,6 +370,7 @@ input GetMediaInput
 {
   query: MediaFieldFiltersInput!
   config: FilterConfig
+  transform: TransformOptions
 }
 
 type GetMediaResponse
@@ -352,14 +383,8 @@ type GetMediaResponse
 input GetPaywallPurchasesInput
   @join__type(graph: PAYWALLS)
 {
-  _id: StringFieldFilter
-  createdAt: StringFieldFilter
-  updatedAt: StringFieldFilter
-  created_by: StringFieldFilter
+  query: PaywallPurchaseFieldFiltersInput!
   config: FilterConfig
-  account: StringFieldFilter
-  paywall: StringFieldFilter
-  status: StringFieldFilter
 }
 
 type GetPaywallPurchasesResponse
@@ -372,14 +397,8 @@ type GetPaywallPurchasesResponse
 input GetPaywallsInput
   @join__type(graph: PAYWALLS)
 {
-  _id: StringFieldFilter
-  createdAt: StringFieldFilter
-  updatedAt: StringFieldFilter
-  created_by: StringFieldFilter
+  query: PaywallFieldFiltersInput!
   config: FilterConfig
-  productId: StringFieldFilter
-  status: StringFieldFilter
-  name: StringFieldFilter
 }
 
 type GetPaywallsResponse
@@ -392,12 +411,8 @@ type GetPaywallsResponse
 input GetServicesInput
   @join__type(graph: PAYWALLS)
 {
-  _id: StringFieldFilter
-  createdAt: StringFieldFilter
-  updatedAt: StringFieldFilter
-  created_by: StringFieldFilter
+  query: ServiceFieldFiltersInput!
   config: FilterConfig
-  name: StringFieldFilter
 }
 
 type GetServicesResponse
@@ -431,6 +446,21 @@ type GetUsersResponse
 {
   data: [User!]!
   stats: Stats!
+}
+
+enum GravityEnum
+  @join__type(graph: MEIDA)
+{
+  SM
+  NO
+  SO
+  EA
+  WE
+  NOWE
+  NOEA
+  SOWE
+  SOEA
+  CE
 }
 
 type HistoricStats
@@ -540,7 +570,9 @@ enum join__Graph {
 
 scalar JWT
   @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
   @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
   @join__type(graph: USERS)
 
 type Layout
@@ -551,7 +583,25 @@ type Layout
   html: String!
   createdAt: DateTime!
   updatedAt: DateTime!
-  created_by: ObjectID!
+  created_by: User!
+}
+
+input LayoutFieldFiltersInput
+  @join__type(graph: MAILER)
+{
+  _id: [StringFieldFilter]
+  name: [StringFieldFilter]
+  html: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+  created_by: [StringFieldFilter]
+}
+
+input LayoutInput
+  @join__type(graph: MAILER)
+{
+  name: String!
+  html: String!
 }
 
 type Limit
@@ -629,6 +679,7 @@ type Media
   mimetype: String! @join__field(graph: MEIDA)
   created_by: User! @join__field(graph: MEIDA)
   title: String! @join__field(graph: MEIDA)
+  src: String! @join__field(graph: MEIDA)
 }
 
 input MediaFieldFiltersInput
@@ -700,9 +751,9 @@ type Mutation
   createContent(createContentInput: CreateContentInput!): Content! @join__field(graph: MAILER)
   updateContent(updateContentInput: UpdateContentInput!): Content! @join__field(graph: MAILER)
   updateLayout(updateLayoutInput: UpdateLayoutInput!): Layout! @join__field(graph: MAILER)
-  deleteContent(deleteContentInput: DeleteContentInput!): Content! @join__field(graph: MAILER)
-  deleteLayout(deleteLayoutInput: DeleteLayoutInput!): Layout! @join__field(graph: MAILER)
-  createMedia(createMediaInput: CreateMediaInput!): Media! @join__field(graph: MEIDA)
+  deleteContents(deleteContentsInput: DeleteContentsInput!): DeleteResponse! @join__field(graph: MAILER)
+  deleteLayouts(deleteLayoutsInput: DeleteLayoutsInput!): DeleteResponse! @join__field(graph: MAILER)
+  createMedia(createMediaInput: CreateMediaInput!): CreateMediaResponse! @join__field(graph: MEIDA)
   deleteMedia(deleteMediaInput: DeleteMediaInput!): DeleteMediaResponse! @join__field(graph: MEIDA)
   createPaywall(createPaywallInput: CreatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
   updatePaywall(updatePaywallInput: UpdatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
@@ -714,7 +765,7 @@ type Mutation
   switchUserMembership(switchUserMembershipInput: SwitchUserMembershipInput!): LoginUserResponse! @join__field(graph: USERS)
   updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
   inviteUser(inviteUserInput: InviteUserInput!): User! @join__field(graph: USERS)
-  deleteUser(deleteUserInput: DeleteUserInput!): User! @join__field(graph: USERS)
+  deleteUsers(deleteUsersInput: DeleteUsersInput!): DeleteResponse! @join__field(graph: USERS)
   createUser(createUserInput: CreateUserInput!): User! @join__field(graph: USERS)
 }
 
@@ -761,6 +812,27 @@ type Paywall
   name: String!
 }
 
+input PaywallFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  productId: [StringFieldFilter]
+  status: [StringFieldFilter]
+  name: [StringFieldFilter]
+}
+
+input PaywallInput
+  @join__type(graph: PAYWALLS)
+{
+  product_id: ID!
+  status: PaywallStatusEnum
+  description: String!
+  name: String!
+}
+
 input PaywallLimitInput
   @join__type(graph: PAYWALLS)
 {
@@ -780,6 +852,26 @@ type PaywallPurchase
   status: PaywallPurchaseStatusEnum!
 }
 
+input PaywallPurchaseFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  account: [StringFieldFilter]
+  paywall: [StringFieldFilter]
+  status: [StringFieldFilter]
+}
+
+input PaywallPurchaseInput
+  @join__type(graph: PAYWALLS)
+{
+  account: ObjectID
+  paywall: ObjectID!
+  status: PaywallPurchaseStatusEnum
+}
+
 enum PaywallPurchaseStatusEnum
   @join__type(graph: PAYWALLS)
 {
@@ -796,9 +888,17 @@ enum PaywallStatusEnum
 }
 
 scalar PhoneNumber
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
   @join__type(graph: USERS)
 
 scalar PostalCode
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
   @join__type(graph: USERS)
 
 type Query
@@ -813,7 +913,6 @@ type Query
   isAuthenticated: Boolean! @join__field(graph: ACCOUNTS)
   getLayouts(getLayoutsInput: GetLayoutsInput!): GetLayoutsResponse! @join__field(graph: MAILER)
   getContents(getContentsInput: GetContentsInput!): GetContentsResponse! @join__field(graph: MAILER)
-  getCompositionDetails: [CompositionDetail]! @join__field(graph: MAILER)
   getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
   getPaywalls(getPaywallsInput: GetPaywallsInput!): GetPaywallsResponse! @join__field(graph: PAYWALLS)
   getPaywallPurchases(getPaywallPurchasesInput: GetPaywallPurchasesInput!): GetPaywallPurchasesResponse! @join__field(graph: PAYWALLS)
@@ -843,6 +942,16 @@ input ResetPasswordInput
   code: String!
 }
 
+enum ResizingTypeEnum
+  @join__type(graph: MEIDA)
+{
+  FILL
+  FIT
+  FILL_DOWN
+  FORCE
+  AUTO
+}
+
 type Scope
   @join__type(graph: PAYWALLS)
 {
@@ -866,6 +975,23 @@ type Service
   created_by: User!
   name: String!
   limits: [Limit!]!
+}
+
+input ServiceFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  name: [StringFieldFilter]
+}
+
+input ServiceInput
+  @join__type(graph: PAYWALLS)
+{
+  name: String!
+  limits: [PaywallLimitInput!]!
 }
 
 type Stats
@@ -933,18 +1059,29 @@ input SwitchUserMembershipInput
   membership_id: ObjectID!
 }
 
+input TransformOptions
+  @join__type(graph: MEIDA)
+{
+  resize: TransformResizeInput
+  gravity: GravityEnum
+  extension: ExtensionEnum
+}
+
+input TransformResizeInput
+  @join__type(graph: MEIDA)
+{
+  resizing_type: ResizingTypeEnum
+  width: Int
+  height: Int
+  enlarge: Boolean
+  extend: Boolean
+}
+
 input UpdateContentInput
   @join__type(graph: MAILER)
 {
-  _id: ObjectID!
-  name: String
-  subject: String
-  plainText: String
-  html: String
-  trigger: String
-  active: Boolean
-  layout: ObjectID
-  variables: [String]
+  query: ContentFieldFiltersInput!
+  payload: ContentInput!
 }
 
 input UpdateEmailInput
@@ -957,9 +1094,8 @@ input UpdateEmailInput
 input UpdateLayoutInput
   @join__type(graph: MAILER)
 {
-  _id: ObjectID!
-  name: String
-  html: String
+  query: LayoutFieldFiltersInput!
+  payload: LayoutInput!
 }
 
 input UpdateMediaInput
@@ -972,28 +1108,22 @@ input UpdateMediaInput
 input UpdatePaywallInput
   @join__type(graph: PAYWALLS)
 {
-  paywall: GetPaywallsInput!
-  product_id: ID
-  status: PaywallStatusEnum
-  description: String
-  name: String
+  query: PaywallFieldFiltersInput!
+  payload: PaywallInput!
 }
 
 input UpdatePaywallPurchaseInput
   @join__type(graph: PAYWALLS)
 {
-  paywallPurchase: GetPaywallPurchasesInput!
-  account: ObjectID
-  status: PaywallPurchaseStatusEnum
+  query: PaywallPurchaseFieldFiltersInput!
+  payload: PaywallPurchaseInput!
 }
 
 input UpdateServiceInput
   @join__type(graph: PAYWALLS)
 {
-  service: GetServicesInput!
-  name: String
-  limits: [PaywallLimitInput!]
-  webhook: String
+  query: ServiceFieldFiltersInput!
+  payload: ServiceInput!
 }
 
 input UpdateUserInput
@@ -1006,7 +1136,14 @@ input UpdateUserInput
 scalar Upload
   @join__type(graph: MEIDA)
 
+type UploadError
+  @join__type(graph: MEIDA)
+{
+  error: String!
+}
+
 type User
+  @join__type(graph: MAILER, key: "_id", resolvable: false)
   @join__type(graph: MEIDA, key: "_id", resolvable: false)
   @join__type(graph: PAYWALLS, key: "_id", resolvable: false)
   @join__type(graph: USERS, key: "_id")
