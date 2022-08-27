@@ -1,594 +1,1204 @@
+
 schema
-  @core(feature: "https://specs.apollo.dev/core/v0.2"),
-  @core(feature: "https://specs.apollo.dev/join/v0.1", for: EXECUTION)
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.2", for: EXECUTION)
 {
   query: Query
   mutation: Mutation
 }
 
-directive @core(as: String, feature: String!, for: core__Purpose) repeatable on SCHEMA
-
-directive @join__field(graph: join__Graph, provides: join__FieldSet, requires: join__FieldSet) on FIELD_DEFINITION
+directive @join__field(graph: join__Graph!, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 directive @join__graph(name: String!, url: String!) on ENUM_VALUE
 
-directive @join__owner(graph: join__Graph!) on INTERFACE | OBJECT
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
 
-directive @join__type(graph: join__Graph!, key: join__FieldSet) repeatable on INTERFACE | OBJECT
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
 
 type Account
-  @join__owner(graph: ACCOUNTS)
   @join__type(graph: ACCOUNTS, key: "_id")
-  @join__type(graph: PAYWALLS, key: "_id")
+  @join__type(graph: PAYWALLS, key: "_id", resolvable: false)
   @join__type(graph: USERS, key: "_id")
 {
-  _id: ObjectID! @join__field(graph: ACCOUNTS)
-  activation: Activation @join__field(graph: ACCOUNTS)
-  createdAt: DateTime! @join__field(graph: ACCOUNTS)
-  email: String! @join__field(graph: ACCOUNTS)
+  _id: ObjectID!
+  email: EmailAddress! @join__field(graph: ACCOUNTS) @join__field(graph: USERS, external: true)
   password: String @join__field(graph: ACCOUNTS)
+  createdAt: DateTime! @join__field(graph: ACCOUNTS)
   updatedAt: DateTime! @join__field(graph: ACCOUNTS)
-  users(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS, requires: "_id email")
+  activation: Activation @join__field(graph: ACCOUNTS)
+  users(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS, requires: "email")
 }
 
-type Activation {
+input AccountFieldFiltersInput
+  @join__type(graph: ACCOUNTS)
+{
+  _id: [StringFieldFilter]
+  email: [StringFieldFilter]
+  activation: GetAccountsActivationInput
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+}
+
+type Activation
+  @join__type(graph: ACCOUNTS)
+{
+  verified: Boolean!
   code: String
   limit: DateTime!
-  verified: Boolean!
 }
 
-type Address {
-  city: String!
-  lineOne: String!
+type Address
+  @join__type(graph: USERS)
+{
+  lineOne: String
   lineTwo: String
-  state: String!
-  zip: String!
+  city: String
+  state: String
+  zip: PostalCode
+  country: CountryCode
+  _id: ObjectID
 }
 
-input AddressInput {
-  city: String!
-  lineOne: String!
+input AddressInput
+  @join__type(graph: USERS)
+{
+  lineOne: String
   lineTwo: String
-  state: String!
-  zip: String!
+  city: String
+  state: String
+  zip: PostalCode
+  country: CountryCode
 }
 
-enum ArrayFilterByEnum {
+enum ArrayFilterByEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   IN
   NIN
 }
 
 """Filter for documents which have a property that is a Boolean."""
-input BooleanFieldFilter {
+input BooleanFieldFilter
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   bool: Boolean!
   filterBy: BooleanFilterByEnum!
-  groups: [String!]
   operator: OperatorFieldConfigEnum
+  groups: [String!]
 }
 
 """Equal or Not Equal"""
-enum BooleanFilterByEnum {
+enum BooleanFilterByEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   EQ
   NE
 }
 
-input CreatePaywallInput {
-  description: String!
-  product_id: ID!
-  status: PaywallStatusEnum
-}
-
-input CreatePaywallPurchaseInput {
-  account: ObjectID
-  paywall: ObjectID!
-  status: PaywallPurchaseStatusEnum!
-}
-
-input CreateServiceInput {
-  limits: [PaywallLimitInput!]!
+type Content
+  @join__type(graph: MAILER)
+{
+  _id: ObjectID!
   name: String!
-  webhook: String
+  subject: String!
+  plainText: String!
+  html: String!
+  created_by: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  trigger: String!
+  active: Boolean!
+  layout: Layout
+  variables: [String]
+}
+
+input ContentFieldFiltersInput
+  @join__type(graph: MAILER)
+{
+  _id: [StringFieldFilter]
+  name: [StringFieldFilter]
+  subject: [StringFieldFilter]
+  plainText: [StringFieldFilter]
+  html: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+  trigger: [StringFieldFilter]
+  active: [BooleanFieldFilter]
+}
+
+input ContentInput
+  @join__type(graph: MAILER)
+{
+  name: String!
+  subject: String!
+  plainText: String!
+  html: String!
+  trigger: String!
+  active: Boolean!
+  layout: ObjectID
+  variables: [String]
+}
+
+scalar CountryCode
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+input CreateContentInput
+  @join__type(graph: MAILER)
+{
+  payload: ContentInput!
+}
+
+input CreateLayoutInput
+  @join__type(graph: MAILER)
+{
+  payload: LayoutInput!
+}
+
+input CreateMediaInput
+  @join__type(graph: MEIDA)
+{
+  payload: [MediaPayloadInput!]!
+}
+
+type CreateMediaResponse
+  @join__type(graph: MEIDA)
+{
+  media: [Media!]!
+  errors: [UploadError!]!
+}
+
+input CreatePaywallInput
+  @join__type(graph: PAYWALLS)
+{
+  payload: PaywallInput!
+}
+
+input CreatePaywallPurchaseInput
+  @join__type(graph: PAYWALLS)
+{
+  payload: PaywallPurchaseInput!
+}
+
+input CreateServiceInput
+  @join__type(graph: PAYWALLS)
+{
+  payload: ServiceInput!
+}
+
+input CreateUserInput
+  @join__type(graph: USERS)
+{
+  payload: UserInput!
 }
 
 """Filter for documents which have a property that is a Date."""
-input DateFieldFilter {
+input DateFieldFilter
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   date: DateTime!
   filterBy: DateFilterByEnum!
-  groups: [String!]
   operator: OperatorFieldConfigEnum
+  groups: [String!]
 }
 
-enum DateFilterByEnum {
+enum DateFilterByEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   EQ
   GT
-  GTE
   LT
+  GTE
   LTE
   NE
 }
 
 scalar DateTime
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
 
-input DeleteMediaInput {
-  _ids: [ObjectID!]!
+input DeleteContentsInput
+  @join__type(graph: MAILER)
+{
+  query: ContentFieldFiltersInput!
 }
 
-type DeleteMediaResponse {
+input DeleteLayoutsInput
+  @join__type(graph: MAILER)
+{
+  query: LayoutFieldFiltersInput!
+}
+
+input DeleteMediaInput
+  @join__type(graph: MEIDA)
+{
+  query: MediaFieldFiltersInput!
+}
+
+type DeleteMediaResponse
+  @join__type(graph: MEIDA)
+{
   deletedCount: Int!
 }
 
-input DeleteUserInput {
-  _id: ObjectID!
+type DeleteResponse
+  @join__type(graph: MAILER)
+  @join__type(graph: USERS)
+{
+  deletedCount: Int!
+}
+
+input DeleteUsersInput
+  @join__type(graph: USERS)
+{
+  query: UserFieldFiltersInput!
+}
+
+scalar EmailAddress
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+enum ExtensionEnum
+  @join__type(graph: MEIDA)
+{
+  PNG
+  JPG
+  JPEG
+  SVG
+  WEBP
+  AVIF
+  GIF
+  ICO
+  BMP
+  TIFF
 }
 
 """Global configuration details."""
-input FilterConfig {
+input FilterConfig
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   pagination: Pagination
+  history: HistoryFilterInput
 }
 
-input GetAccountsActivationInput {
+input GetAccountsActivationInput
+  @join__type(graph: ACCOUNTS)
+{
   verified: [BooleanFieldFilter!]!
 }
 
-input GetAccountsInput {
-  _id: [StringFieldFilter]
-  activation: GetAccountsActivationInput
+input GetAccountsInput
+  @join__type(graph: ACCOUNTS)
+{
+  query: AccountFieldFiltersInput!
   config: FilterConfig
-  createdAt: [DateFieldFilter]
-  email: [StringFieldFilter]
-  updatedAt: [DateFieldFilter]
 }
 
-type GetAccountsResponse {
+type GetAccountsResponse
+  @join__type(graph: ACCOUNTS)
+{
   data: [Account!]!
   stats: Stats!
 }
 
-input GetMediaInput {
-  _id: [StringFieldFilter]
+input GetContentsInput
+  @join__type(graph: MAILER)
+{
+  query: ContentFieldFiltersInput!
   config: FilterConfig
-  createdAt: [DateFieldFilter]
-  created_by: [StringFieldFilter]
-  mimetype: [StringFieldFilter]
-  path: [StringFieldFilter]
-  title: [StringFieldFilter]
-  updatedAt: [DateFieldFilter]
 }
 
-type GetMediaResponse {
+type GetContentsResponse
+  @join__type(graph: MAILER)
+{
+  data: [Content!]!
+  stats: Stats!
+}
+
+input GetLayoutsInput
+  @join__type(graph: MAILER)
+{
+  query: LayoutFieldFiltersInput!
+  config: FilterConfig
+}
+
+type GetLayoutsResponse
+  @join__type(graph: MAILER)
+{
+  data: [Layout!]!
+  stats: Stats!
+}
+
+input GetMediaInput
+  @join__type(graph: MEIDA)
+{
+  query: MediaFieldFiltersInput!
+  config: FilterConfig
+  transform: TransformOptions
+}
+
+type GetMediaResponse
+  @join__type(graph: MEIDA)
+{
   data: [Media!]!
   stats: Stats!
 }
 
-input GetPaywallPurchasesInput {
-  _id: StringFieldFilter
-  account: StringFieldFilter
+input GetPaywallPurchasesInput
+  @join__type(graph: PAYWALLS)
+{
+  query: PaywallPurchaseFieldFiltersInput!
   config: FilterConfig
-  createdAt: StringFieldFilter
-  created_by: StringFieldFilter
-  paywall: StringFieldFilter
-  status: StringFieldFilter
-  updatedAt: StringFieldFilter
 }
 
-type GetPaywallPurchasesResponse {
+type GetPaywallPurchasesResponse
+  @join__type(graph: PAYWALLS)
+{
   data: [PaywallPurchase!]!
   stats: Stats!
 }
 
-input GetPaywallsInput {
-  _id: StringFieldFilter
+input GetPaywallsInput
+  @join__type(graph: PAYWALLS)
+{
+  query: PaywallFieldFiltersInput!
   config: FilterConfig
-  createdAt: StringFieldFilter
-  created_by: StringFieldFilter
-  productId: StringFieldFilter
-  status: StringFieldFilter
-  updatedAt: StringFieldFilter
 }
 
-type GetPaywallsResponse {
+type GetPaywallsResponse
+  @join__type(graph: PAYWALLS)
+{
   data: [Paywall!]!
   stats: Stats!
 }
 
-input GetServicesInput {
-  _id: StringFieldFilter
+input GetServicesInput
+  @join__type(graph: PAYWALLS)
+{
+  query: ServiceFieldFiltersInput!
   config: FilterConfig
-  createdAt: StringFieldFilter
-  created_by: StringFieldFilter
-  name: StringFieldFilter
-  updatedAt: StringFieldFilter
 }
 
-type GetServicesResponse {
+type GetServicesResponse
+  @join__type(graph: PAYWALLS)
+{
   data: [Service!]!
   stats: Stats!
 }
 
-input GetUserByMembershipInput {
-  _id: StringFieldFilter
-  account: StringFieldFilter
-  createdAt: DateFieldFilter
-  role: [IntFieldFilter]
+input GetUserByMembershipFilterInput
+  @join__type(graph: USERS)
+{
   status: [StringFieldFilter]
+  _id: StringFieldFilter
+  createdAt: DateFieldFilter
   updatedAt: DateFieldFilter
+  role: [IntFieldFilter]
+  account: StringFieldFilter
+  default: BooleanFieldFilter
 }
 
-input GetUsersInput {
-  _id: [StringFieldFilter]
+input GetUsersInput
+  @join__type(graph: USERS)
+{
+  query: UserFieldFiltersInput!
   config: FilterConfig
-  createdAt: [DateFieldFilter]
-  created_by: [StringFieldFilter]
-  email: [StringFieldFilter]
-  first_name: [StringFieldFilter]
-  image: [StringFieldFilter]
-  last_name: [StringFieldFilter]
-  memberships: [GetUserByMembershipInput]
-  phone: [StringFieldFilter]
-  updatedAt: [DateFieldFilter]
 }
 
-type GetUsersResponse {
+type GetUsersResponse
+  @join__type(graph: USERS)
+{
   data: [User!]!
   stats: Stats!
 }
 
-"""Filter for documents which have a property that is an Integer."""
-input IntFieldFilter {
-  filterBy: IntFilterByEnum!
-  groups: [String!]
-  int: Int!
-  operator: OperatorFieldConfigEnum
+enum GravityEnum
+  @join__type(graph: MEIDA)
+{
+  SM
+  NO
+  SO
+  EA
+  WE
+  NOWE
+  NOEA
+  SOWE
+  SOEA
+  CE
 }
 
-enum IntFilterByEnum {
+type HistoricStats
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  _id: HistoricStatsId
+  total: Int
+}
+
+type HistoricStatsId
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  YEAR: Int
+  DAY_OF_YEAR: Int
+  MONTH: Int
+  DAY_OF_MONTH: Int
+  WEEK: Int
+  DAY_OF_WEEK: Int
+  HOUR: Int
+  MINUTES: Int
+  SECONDS: Int
+  MILLISECONDS: Int
+}
+
+input HistoryFilterInput
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  interval: [HistoryFilterIntervalEnum!]!
+}
+
+enum HistoryFilterIntervalEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  YEAR
+  DAY_OF_YEAR
+  MONTH
+  DAY_OF_MONTH
+  WEEK
+  DAY_OF_WEEK
+  HOUR
+  MINUTES
+  SECONDS
+  MILLISECONDS
+}
+
+"""Filter for documents which have a property that is an Integer."""
+input IntFieldFilter
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  int: Int!
+  filterBy: IntFilterByEnum!
+  operator: OperatorFieldConfigEnum
+  groups: [String!]
+}
+
+enum IntFilterByEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
   EQ
   GT
-  GTE
   LT
+  GTE
   LTE
   NE
 }
 
-input InviteUserInput {
-  email: String!
-  local: LocalMembershipInput
-  role: Int
-}
-
-type Limit {
-  name: String!
-  scopes: [Scope!]!
-}
-
-input LocalMembershipInput {
-  about: String
-  address: AddressInput
-  first_name: String
-  image: ObjectID
-  last_name: String
-  phone: String
-}
-
-type LocalUserDetails {
-  about: String
-  address: Address
-  first_name: String
-  image: Media
-  last_name: String
-  phone: String
-}
-
-type LoginAccountResponse {
-  account: Account!
-  token: String!
-}
-
-input LoginInput {
-  email: String!
-  password: String!
-}
-
-type LoginUserResponse {
-  token: String!
-  user: User!
-}
-
-type Media
-  @join__owner(graph: MEIDA)
-  @join__type(graph: MEIDA, key: "_id")
-  @join__type(graph: USERS, key: "_id")
+input InviteUserInput
+  @join__type(graph: USERS)
 {
-  _id: ObjectID! @join__field(graph: MEIDA)
-  createdAt: DateTime! @join__field(graph: MEIDA)
-  created_by: User! @join__field(graph: MEIDA)
-  mimetype: String! @join__field(graph: MEIDA)
-  path: String! @join__field(graph: MEIDA)
-  title: String! @join__field(graph: MEIDA)
-  updatedAt: DateTime! @join__field(graph: MEIDA)
-}
-
-type Membership {
-  _id: ObjectID!
-  account: Account!
-  createdAt: DateTime!
-  created_by: User!
-  default: Boolean!
-  local: LocalUserDetails
-  role: Int!
-  status: MembershipStatusEnum
-  updatedAt: DateTime!
-}
-
-input MembershipInput {
-  account: ObjectID!
-  default: Boolean
-  local: LocalMembershipInput
-  role: Int
-  status: MembershipStatusEnum
-}
-
-enum MembershipStatusEnum {
-  ACTIVE
-  INACTIVE
-  PENDING
-  REVOKED
-}
-
-type Mutation {
-  createPaywall(createPaywallInput: CreatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
-  createPaywallPurchase(createPaywallPurchaseInput: CreatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
-  createService(createServiceInput: CreateServiceInput!): Service! @join__field(graph: PAYWALLS)
-  deleteMedia(deleteMediaInput: DeleteMediaInput!): DeleteMediaResponse! @join__field(graph: MEIDA)
-  deleteUser(deleteUserInput: DeleteUserInput!): User! @join__field(graph: USERS)
-  inviteUser(inviteUserInput: InviteUserInput!): User! @join__field(graph: USERS)
-  login(loginInput: LoginInput!): LoginAccountResponse! @join__field(graph: ACCOUNTS)
-  loginUser: LoginUserResponse! @join__field(graph: USERS)
-  register(registerInput: RegisterInput!): Account! @join__field(graph: ACCOUNTS)
-  resetActivationCode(resetCodeInput: ResetCodeInput!): Account! @join__field(graph: ACCOUNTS)
-  resetPassword(resetInput: ResetPasswordInput!): Account! @join__field(graph: ACCOUNTS)
-  singleFileUpload(singleFileUploadInput: SingleFileUploadInput!): Media! @join__field(graph: MEIDA)
-  switchUserMembership(switchUserMembershipInput: SwitchUserMembershipInput!): LoginUserResponse! @join__field(graph: USERS)
-  updateEmail(updateEmailInput: UpdateEmailInput!): Account! @join__field(graph: ACCOUNTS)
-  updatePaywall(updatePaywallInput: UpdatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
-  updatePaywallPurchase(updatePaywallPurchaseInput: UpdatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
-  updateService(updateServiceInput: UpdateServiceInput!): Service! @join__field(graph: PAYWALLS)
-  updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
-  verifyEmail(verifyEmailInput: VerifyEmailInput!): Account! @join__field(graph: ACCOUNTS)
-}
-
-scalar ObjectID
-
-enum OperatorFieldConfigEnum {
-  AND
-  OR
-}
-
-input Pagination {
-  createdAt: DateTime
-  limit: Int
-  reverse: Boolean
-}
-
-type Paywall
-  @join__owner(graph: PAYWALLS)
-  @join__type(graph: PAYWALLS, key: "_id")
-{
-  _id: ObjectID! @join__field(graph: PAYWALLS)
-  createdAt: DateTime! @join__field(graph: PAYWALLS)
-  created_by: User! @join__field(graph: PAYWALLS)
-  description: String! @join__field(graph: PAYWALLS)
-  product_id: ID! @join__field(graph: PAYWALLS)
-  status: PaywallStatusEnum! @join__field(graph: PAYWALLS)
-  updatedAt: DateTime! @join__field(graph: PAYWALLS)
-}
-
-input PaywallLimitInput {
-  name: String!
-  scopes: [ScopeInput!]!
-}
-
-type PaywallPurchase {
-  _id: ObjectID!
-  account: Account!
-  createdAt: DateTime!
-  created_by: User!
-  paywall: Paywall!
-  status: PaywallPurchaseStatusEnum!
-  updatedAt: DateTime!
-}
-
-enum PaywallPurchaseStatusEnum {
-  ACTIVE
-  CREATED
-  INACTIVE
-  PAYMENT_DECLINED
-  PAYMENT_PENDING
-  TERMINATED
-}
-
-enum PaywallStatusEnum {
-  ACTIVE
-  INACTIVE
-}
-
-type Query {
-  getAccounts(getAccountsInput: GetAccountsInput!): GetAccountsResponse! @join__field(graph: ACCOUNTS)
-  getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
-  getMyAccount: Account! @join__field(graph: ACCOUNTS)
-  getPaywallPurchases(getPaywallPurchasesInput: GetPaywallPurchasesInput!): GetPaywallPurchasesResponse! @join__field(graph: PAYWALLS)
-  getPaywalls(getPaywallsInput: GetPaywallsInput!): GetPaywallsResponse! @join__field(graph: PAYWALLS)
-  getServices(getServicesInput: GetServicesInput!): GetServicesResponse! @join__field(graph: PAYWALLS)
-  getUsers(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS)
-  isAuthenticated: Boolean! @join__field(graph: ACCOUNTS)
-  me: User! @join__field(graph: USERS)
-}
-
-input RegisterInput {
-  email: String!
-  password: String!
-  password2: String!
-}
-
-input ResetCodeInput {
-  email: String!
-}
-
-input ResetPasswordInput {
-  code: String!
-  email: String!
-  password: String!
-  password2: String!
-}
-
-type Scope {
-  paywall: Paywall!
-  quantity: Int!
-}
-
-input ScopeInput {
-  paywall: ObjectID!
-  quantity: Int!
-}
-
-type Service {
-  _id: ObjectID!
-  createdAt: DateTime!
-  created_by: User!
-  limits: [Limit!]!
-  name: String!
-  updatedAt: DateTime!
-  webhook: String
-}
-
-input SingleFileUploadInput {
-  file: Upload!
-  title: String!
-}
-
-type Stats {
-  cursor: DateTime
-  page: Int
-  remaining: Int
-  total: Int
-}
-
-"""
-Filter for documents which have a property that is an array of strings..
-"""
-input StringArrayFieldFilter {
-  arrayOptions: ArrayFilterByEnum!
-  filterBy: StringFilterByEnum!
-  groups: [String!]
-  operator: OperatorFieldConfigEnum
-  string: [String!]!
-}
-
-"""
-Filter for documents which have a property that is a string. Filter by REGEX, ObjectID, or Match.
-"""
-input StringFieldFilter {
-  filterBy: StringFilterByEnum!
-  groups: [String!]
-  operator: OperatorFieldConfigEnum
-  string: String!
-}
-
-enum StringFilterByEnum {
-  MATCH
-  OBJECTID
-  REGEX
-}
-
-input SwitchUserMembershipInput {
-  membership_id: ObjectID!
-}
-
-input UpdateEmailInput {
-  email: String!
-}
-
-input UpdatePaywallInput {
-  description: String
-  paywall: GetPaywallsInput!
-  product_id: ID
-  status: PaywallStatusEnum
-}
-
-input UpdatePaywallPurchaseInput {
-  account: ObjectID
-  paywallPurchase: GetPaywallPurchasesInput!
-  status: PaywallPurchaseStatusEnum
-}
-
-input UpdateServiceInput {
-  limits: [PaywallLimitInput!]
-  name: String
-  service: GetServicesInput!
-  webhook: String
-}
-
-input UpdateUserInput {
-  about: String
-  address: AddressInput
-  email: String
-  first_name: String
-  image: ObjectID
-  last_name: String
-  memberships: MembershipInput
-  phone: String
-  user: GetUsersInput!
-}
-
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload
-
-type User
-  @join__owner(graph: USERS)
-  @join__type(graph: USERS, key: "_id")
-  @join__type(graph: MEIDA, key: "_id")
-  @join__type(graph: PAYWALLS, key: "_id")
-{
-  _id: ObjectID! @join__field(graph: USERS)
-  about: String @join__field(graph: USERS)
-  address: Address @join__field(graph: USERS)
-  createdAt: DateTime! @join__field(graph: USERS)
-  created_by: User @join__field(graph: USERS)
-  email: String! @join__field(graph: USERS)
-  first_name: String @join__field(graph: USERS)
-  image: Media @join__field(graph: USERS)
-  last_name: String @join__field(graph: USERS)
-  memberships: [Membership!]! @join__field(graph: USERS)
-  phone: String @join__field(graph: USERS)
-  updatedAt: DateTime! @join__field(graph: USERS)
-}
-
-input VerifyEmailInput {
-  code: String!
-  email: String!
-}
-
-type VerifyEmailResponse {
-  message: String!
-}
-
-enum core__Purpose {
-  """
-  `EXECUTION` features provide metadata necessary to for operation execution.
-  """
-  EXECUTION
-
-  """
-  `SECURITY` features provide metadata necessary to securely resolve fields.
-  """
-  SECURITY
+  query: UserFieldFiltersInput!
+  payload: UserInput!
 }
 
 scalar join__FieldSet
 
 enum join__Graph {
-  ACCOUNTS @join__graph(name: "accounts" url: "http://localhost:5001")
-  MEIDA @join__graph(name: "meida" url: "http://localhost:5006/graphql")
-  PAYWALLS @join__graph(name: "paywalls" url: "http://localhost:5010/graphql")
-  USERS @join__graph(name: "users" url: "http://localhost:5002")
+  ACCOUNTS @join__graph(name: "accounts", url: "http://localhost:5001")
+  MAILER @join__graph(name: "mailer", url: "http://mailer:5008/graphql")
+  MEIDA @join__graph(name: "meida", url: "http://localhost:5006/graphql")
+  PAYWALLS @join__graph(name: "paywalls", url: "http://localhost:5010/graphql")
+  USERS @join__graph(name: "users", url: "http://localhost:5002")
+}
+
+scalar JWT
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+type Layout
+  @join__type(graph: MAILER)
+{
+  _id: ObjectID!
+  name: String!
+  html: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  created_by: User!
+}
+
+input LayoutFieldFiltersInput
+  @join__type(graph: MAILER)
+{
+  _id: [StringFieldFilter]
+  name: [StringFieldFilter]
+  html: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+  created_by: [StringFieldFilter]
+}
+
+input LayoutInput
+  @join__type(graph: MAILER)
+{
+  name: String!
+  html: String!
+}
+
+type Limit
+  @join__type(graph: PAYWALLS)
+{
+  name: String!
+  scopes: [Scope!]!
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+input LocalMembershipInput
+  @join__type(graph: USERS)
+{
+  first_name: String
+  last_name: String
+  phone: PhoneNumber
+  address: AddressInput
+  image: ObjectID
+  about: String
+}
+
+type LocalUserDetails
+  @join__type(graph: USERS)
+{
+  first_name: String
+  last_name: String
+  phone: PhoneNumber
+  address: Address
+  image: Media
+  about: String
+}
+
+type LoginAccountResponse
+  @join__type(graph: ACCOUNTS)
+{
+  token: JWT!
+  account: Account!
+}
+
+input LoginInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+  password: String!
+}
+
+type LoginUserResponse
+  @join__type(graph: USERS)
+{
+  user: User!
+  token: String!
+}
+
+type Media
+  @join__type(graph: MEIDA, key: "_id")
+  @join__type(graph: USERS, key: "_id", resolvable: false)
+{
+  _id: ObjectID!
+  createdAt: DateTime! @join__field(graph: MEIDA)
+  updatedAt: DateTime! @join__field(graph: MEIDA)
+  path: String! @join__field(graph: MEIDA)
+  mimetype: String! @join__field(graph: MEIDA)
+  created_by: User! @join__field(graph: MEIDA)
+  title: String! @join__field(graph: MEIDA)
+  src: String! @join__field(graph: MEIDA)
+}
+
+input MediaFieldFiltersInput
+  @join__type(graph: MEIDA)
+{
+  path: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  _id: [StringFieldFilter]
+  title: [StringFieldFilter]
+  mimetype: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+}
+
+input MediaPayloadInput
+  @join__type(graph: MEIDA)
+{
+  file: Upload!
+  title: String!
+}
+
+type Membership
+  @join__type(graph: USERS)
+{
+  _id: ObjectID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  role: Int!
+  created_by: User!
+  account: Account!
+  status: MembershipStatusEnum
+  local: LocalUserDetails
+  default: Boolean!
+}
+
+input MembershipInput
+  @join__type(graph: USERS)
+{
+  role: Int
+  account: ObjectID!
+  status: MembershipStatusEnum
+  local: LocalMembershipInput
+  default: Boolean
+}
+
+enum MembershipStatusEnum
+  @join__type(graph: USERS)
+{
+  PENDING
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+type Mutation
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  login(loginInput: LoginInput!): LoginAccountResponse! @join__field(graph: ACCOUNTS)
+  register(registerInput: RegisterInput!): Account! @join__field(graph: ACCOUNTS)
+  resetPassword(resetInput: ResetPasswordInput!): Account! @join__field(graph: ACCOUNTS)
+  updateEmail(updateEmailInput: UpdateEmailInput!): Account! @join__field(graph: ACCOUNTS)
+  verifyEmail(verifyEmailInput: VerifyEmailInput!): Account! @join__field(graph: ACCOUNTS)
+  resetActivationCode(resetCodeInput: ResetCodeInput!): Account! @join__field(graph: ACCOUNTS)
+  createLayout(createLayoutInput: CreateLayoutInput!): Layout! @join__field(graph: MAILER)
+  createContent(createContentInput: CreateContentInput!): Content! @join__field(graph: MAILER)
+  updateContent(updateContentInput: UpdateContentInput!): Content! @join__field(graph: MAILER)
+  updateLayout(updateLayoutInput: UpdateLayoutInput!): Layout! @join__field(graph: MAILER)
+  deleteContents(deleteContentsInput: DeleteContentsInput!): DeleteResponse! @join__field(graph: MAILER)
+  deleteLayouts(deleteLayoutsInput: DeleteLayoutsInput!): DeleteResponse! @join__field(graph: MAILER)
+  createMedia(createMediaInput: CreateMediaInput!): CreateMediaResponse! @join__field(graph: MEIDA)
+  deleteMedia(deleteMediaInput: DeleteMediaInput!): DeleteMediaResponse! @join__field(graph: MEIDA)
+  createPaywall(createPaywallInput: CreatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
+  updatePaywall(updatePaywallInput: UpdatePaywallInput!): Paywall! @join__field(graph: PAYWALLS)
+  createService(createServiceInput: CreateServiceInput!): Service! @join__field(graph: PAYWALLS)
+  updateService(updateServiceInput: UpdateServiceInput!): Service! @join__field(graph: PAYWALLS)
+  createPaywallPurchase(createPaywallPurchaseInput: CreatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
+  updatePaywallPurchase(updatePaywallPurchaseInput: UpdatePaywallPurchaseInput!): PaywallPurchase! @join__field(graph: PAYWALLS)
+  loginUser: LoginUserResponse! @join__field(graph: USERS)
+  switchUserMembership(switchUserMembershipInput: SwitchUserMembershipInput!): LoginUserResponse! @join__field(graph: USERS)
+  updateUser(updateUserInput: UpdateUserInput!): User! @join__field(graph: USERS)
+  inviteUser(inviteUserInput: InviteUserInput!): User! @join__field(graph: USERS)
+  deleteUsers(deleteUsersInput: DeleteUsersInput!): DeleteResponse! @join__field(graph: USERS)
+  createUser(createUserInput: CreateUserInput!): User! @join__field(graph: USERS)
+}
+
+scalar ObjectID
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+enum OperatorFieldConfigEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  AND
+  OR
+}
+
+input Pagination
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  limit: Int
+  reverse: Boolean
+  createdAt: DateTime
+}
+
+type Paywall
+  @join__type(graph: PAYWALLS, key: "_id")
+{
+  _id: ObjectID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  created_by: User!
+  product_id: ID!
+  status: PaywallStatusEnum!
+  description: String!
+  name: String!
+}
+
+input PaywallFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  productId: [StringFieldFilter]
+  status: [StringFieldFilter]
+  name: [StringFieldFilter]
+}
+
+input PaywallInput
+  @join__type(graph: PAYWALLS)
+{
+  product_id: ID!
+  status: PaywallStatusEnum
+  description: String!
+  name: String!
+}
+
+input PaywallLimitInput
+  @join__type(graph: PAYWALLS)
+{
+  name: String!
+  scopes: [ScopeInput!]!
+}
+
+type PaywallPurchase
+  @join__type(graph: PAYWALLS)
+{
+  _id: ObjectID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  created_by: User!
+  account: Account!
+  paywall: Paywall!
+  status: PaywallPurchaseStatusEnum!
+}
+
+input PaywallPurchaseFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  account: [StringFieldFilter]
+  paywall: [StringFieldFilter]
+  status: [StringFieldFilter]
+}
+
+input PaywallPurchaseInput
+  @join__type(graph: PAYWALLS)
+{
+  account: ObjectID
+  paywall: ObjectID!
+  status: PaywallPurchaseStatusEnum
+}
+
+enum PaywallPurchaseStatusEnum
+  @join__type(graph: PAYWALLS)
+{
+  CREATED
+  ACTIVE
+  INACTIVE
+}
+
+enum PaywallStatusEnum
+  @join__type(graph: PAYWALLS)
+{
+  ACTIVE
+  INACTIVE
+}
+
+scalar PhoneNumber
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+scalar PostalCode
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+
+type Query
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  getMyAccount: Account! @join__field(graph: ACCOUNTS)
+  getAccounts(getAccountsInput: GetAccountsInput!): GetAccountsResponse! @join__field(graph: ACCOUNTS)
+  isAuthenticated: Boolean! @join__field(graph: ACCOUNTS)
+  getLayouts(getLayoutsInput: GetLayoutsInput!): GetLayoutsResponse! @join__field(graph: MAILER)
+  getContents(getContentsInput: GetContentsInput!): GetContentsResponse! @join__field(graph: MAILER)
+  getMedia(getMediaInput: GetMediaInput!): GetMediaResponse! @join__field(graph: MEIDA)
+  getPaywalls(getPaywallsInput: GetPaywallsInput!): GetPaywallsResponse! @join__field(graph: PAYWALLS)
+  getPaywallPurchases(getPaywallPurchasesInput: GetPaywallPurchasesInput!): GetPaywallPurchasesResponse! @join__field(graph: PAYWALLS)
+  getServices(getServicesInput: GetServicesInput!): GetServicesResponse! @join__field(graph: PAYWALLS)
+  getUsers(getUsersInput: GetUsersInput!): GetUsersResponse! @join__field(graph: USERS)
+  me: User! @join__field(graph: USERS)
+}
+
+input RegisterInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+  password: String
+}
+
+input ResetCodeInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+}
+
+input ResetPasswordInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+  password: String!
+  code: String!
+}
+
+enum ResizingTypeEnum
+  @join__type(graph: MEIDA)
+{
+  FILL
+  FIT
+  FILL_DOWN
+  FORCE
+  AUTO
+}
+
+type Scope
+  @join__type(graph: PAYWALLS)
+{
+  paywall: Paywall!
+  quantity: Int!
+}
+
+input ScopeInput
+  @join__type(graph: PAYWALLS)
+{
+  paywall: ObjectID!
+  quantity: Int!
+}
+
+type Service
+  @join__type(graph: PAYWALLS)
+{
+  _id: ObjectID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  created_by: User!
+  name: String!
+  limits: [Limit!]!
+}
+
+input ServiceFieldFiltersInput
+  @join__type(graph: PAYWALLS)
+{
+  _id: [StringFieldFilter]
+  createdAt: [StringFieldFilter]
+  updatedAt: [StringFieldFilter]
+  created_by: [StringFieldFilter]
+  name: [StringFieldFilter]
+}
+
+input ServiceInput
+  @join__type(graph: PAYWALLS)
+{
+  name: String!
+  limits: [PaywallLimitInput!]!
+}
+
+type Stats
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  remaining: Int
+  total: Int
+  page: Int
+  cursor: DateTime
+  history: [HistoricStats!]
+}
+
+"""
+Filter for documents which have a property that is an array of strings..
+"""
+input StringArrayFieldFilter
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  string: [String!]!
+  filterBy: StringFilterByEnum!
+  arrayOptions: ArrayFilterByEnum!
+  operator: OperatorFieldConfigEnum
+  groups: [String!]
+}
+
+"""
+Filter for documents which have a property that is a string. Filter by REGEX, ObjectID, or Match.
+"""
+input StringFieldFilter
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  string: String!
+  filterBy: StringFilterByEnum!
+  operator: OperatorFieldConfigEnum
+  groups: [String!]
+}
+
+enum StringFilterByEnum
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: MAILER)
+  @join__type(graph: MEIDA)
+  @join__type(graph: PAYWALLS)
+  @join__type(graph: USERS)
+{
+  REGEX
+  MATCH
+  OBJECTID
+}
+
+input SwitchUserMembershipInput
+  @join__type(graph: USERS)
+{
+  membership_id: ObjectID!
+}
+
+input TransformOptions
+  @join__type(graph: MEIDA)
+{
+  resize: TransformResizeInput
+  gravity: GravityEnum
+  extension: ExtensionEnum
+}
+
+input TransformResizeInput
+  @join__type(graph: MEIDA)
+{
+  resizing_type: ResizingTypeEnum
+  width: Int
+  height: Int
+  enlarge: Boolean
+  extend: Boolean
+}
+
+input UpdateContentInput
+  @join__type(graph: MAILER)
+{
+  query: ContentFieldFiltersInput!
+  payload: ContentInput!
+}
+
+input UpdateEmailInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+  account: ObjectID!
+}
+
+input UpdateLayoutInput
+  @join__type(graph: MAILER)
+{
+  query: LayoutFieldFiltersInput!
+  payload: LayoutInput!
+}
+
+input UpdateMediaInput
+  @join__type(graph: MEIDA)
+{
+  payload: MediaPayloadInput!
+  query: MediaFieldFiltersInput!
+}
+
+input UpdatePaywallInput
+  @join__type(graph: PAYWALLS)
+{
+  query: PaywallFieldFiltersInput!
+  payload: PaywallInput!
+}
+
+input UpdatePaywallPurchaseInput
+  @join__type(graph: PAYWALLS)
+{
+  query: PaywallPurchaseFieldFiltersInput!
+  payload: PaywallPurchaseInput!
+}
+
+input UpdateServiceInput
+  @join__type(graph: PAYWALLS)
+{
+  query: ServiceFieldFiltersInput!
+  payload: ServiceInput!
+}
+
+input UpdateUserInput
+  @join__type(graph: USERS)
+{
+  query: UserFieldFiltersInput!
+  payload: UserInput!
+}
+
+scalar Upload
+  @join__type(graph: MEIDA)
+
+type UploadError
+  @join__type(graph: MEIDA)
+{
+  error: String!
+}
+
+type User
+  @join__type(graph: MAILER, key: "_id", resolvable: false)
+  @join__type(graph: MEIDA, key: "_id", resolvable: false)
+  @join__type(graph: PAYWALLS, key: "_id", resolvable: false)
+  @join__type(graph: USERS, key: "_id")
+{
+  _id: ObjectID!
+  createdAt: DateTime! @join__field(graph: USERS)
+  updatedAt: DateTime! @join__field(graph: USERS)
+  created_by: User @join__field(graph: USERS)
+  first_name: String @join__field(graph: USERS)
+  last_name: String @join__field(graph: USERS)
+  phone: PhoneNumber @join__field(graph: USERS)
+  address: Address @join__field(graph: USERS)
+  email: EmailAddress! @join__field(graph: USERS)
+  image: Media @join__field(graph: USERS)
+  memberships: [Membership!]! @join__field(graph: USERS)
+  about: String @join__field(graph: USERS)
+}
+
+input UserFieldFiltersInput
+  @join__type(graph: USERS)
+{
+  created_by: [StringFieldFilter]
+  email: [StringFieldFilter]
+  _id: [StringFieldFilter]
+  first_name: [StringFieldFilter]
+  last_name: [StringFieldFilter]
+  phone: [StringFieldFilter]
+  image: [StringFieldFilter]
+  createdAt: [DateFieldFilter]
+  updatedAt: [DateFieldFilter]
+  memberships: [GetUserByMembershipFilterInput]
+}
+
+input UserInput
+  @join__type(graph: USERS)
+{
+  last_name: String
+  first_name: String
+  email: EmailAddress
+  phone: PhoneNumber
+  address: AddressInput
+  image: ObjectID
+  about: String
+  memberships: MembershipInput
+}
+
+input VerifyEmailInput
+  @join__type(graph: ACCOUNTS)
+{
+  email: EmailAddress!
+  code: String!
+}
+
+type VerifyEmailResponse
+  @join__type(graph: ACCOUNTS)
+{
+  message: String!
 }
