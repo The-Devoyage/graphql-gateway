@@ -9,7 +9,6 @@ import { graphqlUploadExpress } from "graphql-upload";
 import { Router } from "./routes";
 import { readFileSync } from "fs";
 import { Helpers } from "@the-devoyage/micro-auth-helpers";
-import { ApolloServerPluginGraphQLPaywall } from "@the-devoyage/paywall-helpers";
 
 const supergraphSdl = readFileSync("./supergraph.graphql").toString();
 
@@ -38,12 +37,6 @@ async function startServer() {
         req,
         secretOrPublicKey: process.env.JWT_ENCRYPTION_KEY,
       }),
-    plugins: [
-      ApolloServerPluginGraphQLPaywall({
-        paywallURI: "http://localhost:5010",
-        config: { createPurchaseContext: true },
-      }),
-    ],
   });
   await apolloServer.start();
   app.use(graphqlUploadExpress());
