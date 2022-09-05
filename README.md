@@ -1,20 +1,63 @@
 # The Devoyage GraphQL Gateway
 
-A simple to spin up and customize Apollo Gateway with pre-built Authorization Checking and File Uploading/Serving features. Use it out of the box, or as a starting point to jump start your API design.
+An Apollo Gateway server with pre-built authorization, file routing capabilities.
 
 ## Features
 
-### Authentication and Authorization Built In
+### JWT Authorization
 
-The `graphql-gateway` repo is ready to deploy with authorization and authentication features. Simply pass a JSON web token in the `Authorization` header with each request. It is NOT required to send the token.
+1. Set Token Secret Key in `.env`.
 
-All incoming request are checked for the token. If the environment variables are set properly, the server will decode the token's payload and send the context to all federated subgraphs automatically.
+2. Simply pass a JSON web token in the `Authorization` header with each request.
 
-### File Uploading and Serving - Routing Features
+```json
+// Request Headers
+{
+  "Authorization": "Bearer $TOKEN",
+}
+}
+```
 
-File upload routing is pre-configured to allow file uploads to an external file upload server that is using the `graphql-upload` package. This repo uses `@profusion/apollo-federation-upload` package to route the files to the external file upload server out of the box. Note, this is not a file upload server.
+3. Tokens are validated automatically. 
 
-File serving is also enabled by default using proxies to serve static files from an external express server. These can be configured through environment variables. The gateway server proxies requests for files at a custom route, `/public` by default. All requests that use this endpoint are proxied to the uri set in the env vars.
+4. Valid tokens result in payloads being decoded and attached to Global Context. 
+
+### Global Context
+
+Payload Data from valid tokens is automatically decoded and attached to `context` of which is sent to federated subgraphs, allowing federated services to consume "globally" available context generated within the gateway.
+
+```
+// Subgraph Service:
+// request.headers.context
+{
+  auth: {
+    payload: { ...tokenPayload };
+    isAuth: boolean;
+    error?: string;
+  },
+  ...customContext
+}
+```
+
+### File Serving Proxy
+
+A file serving proxy is included to get files from an external API/micro service. This way you can keep a single API endpoint while accessing restful data from external services.
+
+1. Configure the `.env` variables. 
+  - `MEDIA_SERVER_URL` - The url of the file upload server.
+  - `MEDIA_SERVING_ROUTE` - The endpoint to request media from.
+
+2. Send request for the file to `$YOUR_GATEWAY_URL/$MEDIA_SERVING_ROUTE/YOUR_CUSTOM_ENDPOINT`.
+  - The request is now proxied to `$MEDIA_SERVER_URL/YOUR_CUSTOM_ENDPOINT` to receive/handle the request.
+
+
+### File Uploading "Proxy"
+
+Attach files directly to graphql mutations of which support the `@profusion/apollo-federation-upload` library.
+
+1. Ensure the file uploading server is set up with the `@profusion/apollo-federation-upload` library.
+
+2. Send files as documented through graphql mutations. This server is pre-configured to allow files through graphql requests using the same library. 
 
 ## License
 
