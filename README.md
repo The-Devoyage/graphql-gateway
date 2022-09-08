@@ -4,11 +4,17 @@ An Apollo Gateway server with pre-built authorization, file routing capabilities
 
 ## Features
 
+### Apollo Gateway
+
+Uses Apollo Gateway out of the box! Build supergraph schema, and send the requests.
+
 ### JWT Authorization
+
+Built in, the gateway can authorize requests using JWTs. The gateway will check every request for the JWT and provide useful context for subsequent actions.
 
 1. Set Token Secret Key in `.env`.
 
-2. Simply pass a JSON web token in the `Authorization` header with each request.
+2. Pass the issued JSON web token in the `Authorization` header with each request. Be sure to sign the token with the same key used in step one.
 
 ```json
 // Request Headers
@@ -18,13 +24,15 @@ An Apollo Gateway server with pre-built authorization, file routing capabilities
 }
 ```
 
-3. Tokens are validated automatically. 
+3. Authorization context is appended to `Global Context`.
 
-4. Valid tokens result in payloads being decoded and attached to Global Context. 
+- Token payloads are decoded and attached to context.
+- Authorization status is determined based on valid tokens, and attached to context.
+- Errors are propagated and attached to context.
 
 ### Global Context
 
-Payload Data from valid tokens is automatically decoded and attached to `context` of which is sent to federated subgraphs, allowing federated services to consume "globally" available context generated within the gateway.
+Each request is appended with `Global Context`. This is data that can be utilized within subgraphs. 
 
 ```
 // Subgraph Service:
@@ -43,7 +51,7 @@ Payload Data from valid tokens is automatically decoded and attached to `context
 
 A file serving proxy is included to get files from an external API/micro service. This way you can keep a single API endpoint while accessing restful data from external services.
 
-1. Configure the `.env` variables. 
+1. Configure the `.env` variables. Both are required. 
   - `MEDIA_SERVER_URL` - The url of the file upload server.
   - `MEDIA_SERVING_ROUTE` - The endpoint to request media from.
 
@@ -61,13 +69,13 @@ Attach files directly to graphql mutations of which support the `@profusion/apol
 
 ## License
 
-This repository provides a GPL License by default. If you want to use this product in a private commericial setting, you may purchase the MIT Licensed Version [Here!](https://thedevoyage.gumroad.com/l/graphql-gateway)
+This repository provides a GPL License by default. If you want to use this product in a private commercial setting, you may purchase the MIT Licensed Version [Here!](https://thedevoyage.gumroad.com/l/graphql-gateway)
 
 ## Setup
 
 ### Clone and Setup
 
-1. Next, install dependencies.
+1. Install dependencies
 
 Global Dependencies:
 
@@ -125,5 +133,5 @@ npm run supergraph
 
 If you are using Docker or Docker-Compose, create a volume to mount the newly generated `supergraph.graphql` to `/app/supergraph.graphql`. This will allow you to override the `supergraph.graphql` file that is default inside the container.
 
-7. Anytime a new supergraph is generated, you must restart the server. Create new supergraphs as the typings of external services change.
+6. Anytime a new supergraph is generated, you must restart the server. Create new supergraphs as the typings of external services change.
 
