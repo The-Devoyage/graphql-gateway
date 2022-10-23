@@ -1,7 +1,6 @@
 # Changelog
 
-## [v0.2.1]
-- Remove github token requirements
+## [Unreleased]
 
 ## [v0.2.0]
 
