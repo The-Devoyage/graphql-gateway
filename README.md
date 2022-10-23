@@ -81,14 +81,6 @@ Global Dependencies:
 
 Rover CLI to generate Supergraph - Documentation about Rover is provided on the Apollo Rover website.
 
-Login to Github NPM Registry:
-
-There are a few packages we use that are located within the NPM Github Registry -- Login, so that you may install them with NPM.
-
-```
-npm login --registry=https://npm.pkg.github.com
-```
-
 Install Dependencies:
 
 ```
