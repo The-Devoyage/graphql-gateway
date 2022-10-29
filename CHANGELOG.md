@@ -1,6 +1,7 @@
 # Changelog
 
-## [Unreleased]
+## [v0.2.1]
+- Remove requirement for GitHub Personal Access Token
 
 ## [v0.2.0]
 
