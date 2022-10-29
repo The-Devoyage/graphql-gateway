@@ -1,7 +1,11 @@
 # Changelog
 
 ## [v0.2.1]
-- Remove requirement for GitHub Personal Access Token
+
+### Changed
+
+- Remove requirement for GitHub Personal Access Token.
+- Update Dockerfiles to require PAT.
 
 ## [v0.2.0]
 
